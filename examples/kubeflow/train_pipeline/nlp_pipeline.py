@@ -9,6 +9,8 @@ from kubernetes import client as k8s
   description='A pipeline demonstrating reproducible steps for NLP'
 )
 def nlp_pipeline(
+        deployment_name="seldon_deployment",
+        canary_deployment_weight=0,
         csv_url="https://raw.githubusercontent.com/axsauze/reddit-classification-exploration/master/data/reddit_train.csv",
         csv_encoding="ISO-8859-1",
         features_column="BODY",
@@ -112,6 +114,21 @@ def nlp_pipeline(
     except:
         # If this file is run from the project core directory 
         seldon_config = yaml.load(open("deploy_pipeline/seldon_production_pipeline.yaml"))
+
+    seldon_config["spec"]["name"] = "{{inputs.parameters.deployment-name}}"
+    seldon_config["metadata"]["name"] = "{{inputs.parameters.deployment-name}}"
+    seldon_config["spec"]["predictors"][0]["componentSpecs"][0]["spec"]["volumes"] = \
+            [{"name": "mypvc", "persistentVolumeClaim": { "claimName": "{{workflow.name}}-my-pvc" } }]
+
+    # TODO: Add Kubeflow issue to enable function types for k8s_resources
+    if canary_deployment_weight.value:
+        seldon_config["spec"]["name"] = "canary-{{inputs.parameters.deployment-name}}"
+        if not "annotations" in seldon_config["spec"]:
+            seldon_config["spec"]["annotations"] = {}
+        seldon_config["spec"]["annotations"]["seldon.io/ambassador-service-name"] = \
+                "{{inputs.parameters.deployment-name}}"
+        seldon_config["spec"]["annotations"]["seldon.io/ambassador-weight"] = \
+               str(canary_deployment_weight.value) 
 
     deploy_step = dsl.ResourceOp(
         name="seldondeploy",
