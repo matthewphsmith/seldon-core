@@ -9,7 +9,8 @@ from kubernetes import client as k8s
   description='A pipeline demonstrating reproducible steps for NLP'
 )
 def nlp_pipeline(
-        deployment_name="seldon_deployment",
+        deployment_name="pipelinenlp",
+        service_deployment_name="pipelinenlp",
         canary_deployment_weight=0,
         csv_url="https://raw.githubusercontent.com/axsauze/reddit-classification-exploration/master/data/reddit_train.csv",
         csv_encoding="ISO-8859-1",
@@ -109,30 +110,23 @@ def nlp_pipeline(
         pvolumes={"/mnt": vectorize_step.pvolume}
     )
 
+    # Can't pass parameters dynamically due to https://github.com/argoproj/argo/issues/703
+    # We access parameters directly passed to the workflow as {{workflow.parameters}}
     try:
-        seldon_config = yaml.load(open("../deploy_pipeline/seldon_production_pipeline.yaml"))
+        seldon_config = open("../deploy_pipeline/seldon_production_pipeline.yaml").read()
     except:
         # If this file is run from the project core directory 
-        seldon_config = yaml.load(open("deploy_pipeline/seldon_production_pipeline.yaml"))
+        seldon_config = open("deploy_pipeline/seldon_production_pipeline.yaml").read()
 
-    seldon_config["spec"]["name"] = "{{inputs.parameters.deployment-name}}"
-    seldon_config["metadata"]["name"] = "{{inputs.parameters.deployment-name}}"
-    seldon_config["spec"]["predictors"][0]["componentSpecs"][0]["spec"]["volumes"] = \
-            [{"name": "mypvc", "persistentVolumeClaim": { "claimName": "{{workflow.name}}-my-pvc" } }]
-
-    # TODO: Add Kubeflow issue to enable function types for k8s_resources
-    if canary_deployment_weight.value:
-        seldon_config["spec"]["name"] = "canary-{{inputs.parameters.deployment-name}}"
-        if not "annotations" in seldon_config["spec"]:
-            seldon_config["spec"]["annotations"] = {}
-        seldon_config["spec"]["annotations"]["seldon.io/ambassador-service-name"] = \
-                "{{inputs.parameters.deployment-name}}"
-        seldon_config["spec"]["annotations"]["seldon.io/ambassador-weight"] = \
-               str(canary_deployment_weight.value) 
+    seldon_config = seldon_config.replace("REPLACE_DEPLOYMENT_NAME", str(deployment_name))
+    seldon_config = seldon_config.replace("REPLACE_SVC_NAME", str(service_deployment_name))
+    seldon_config = seldon_config.replace("REPLACE_CANARY_WEIGHT", str(canary_deployment_weight))
+    seldon_config = seldon_config.replace("REPLACE_PVC_NAME", "{{workflow.name}}-my-pvc")
+    seldon_config_dict = yaml.load(seldon_config)
 
     deploy_step = dsl.ResourceOp(
         name="seldondeploy",
-        k8s_resource=seldon_config,
+        k8s_resource=seldon_config_dict,
         attribute_outputs={"name": "{.metadata.name}"})
 
     deploy_step.after(predict_step)

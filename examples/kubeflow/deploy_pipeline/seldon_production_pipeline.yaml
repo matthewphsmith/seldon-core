@@ -4,13 +4,15 @@ kind: SeldonDeployment
 metadata:
   labels:
     app: seldon
-  name: "seldon-deployment-{{workflow.name}}"
+  name: "REPLACE_DEPLOYMENT_NAME"
   namespace: kubeflow
 spec:
   annotations:
     project_name: NLP Pipeline
     deployment_version: v1
-  name: "seldon-deployment-{{workflow.name}}"
+    seldon.io/ambassador-service-name: "REPLACE_SVC_NAME"
+    seldon.io/ambassador-weight: "REPLACE_CANARY_WEIGHT"
+  name: "REPLACE_DEPLOYMENT_NAME"
   oauth_key: oauth-key
   oauth_secret: oauth-secret
   predictors:
@@ -42,7 +44,7 @@ spec:
         volumes:
         - name: mypvc
           persistentVolumeClaim:
-            claimName: "{{workflow.name}}-my-pvc"
+            claimName: "REPLACE_PVC_NAME"
     graph:
       children:
       - name: spacytokenizer
