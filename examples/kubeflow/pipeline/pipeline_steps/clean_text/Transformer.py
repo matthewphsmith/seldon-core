@@ -25,7 +25,10 @@ class Transformer():
         try:
             decoded = raw_text.encode("ISO-8859-1").decode("utf-8")
         except:
-            decoded = raw_text.encode("ISO-8859-1").decode("cp1252")
+            try: 
+                decoded = raw_text.encode("ISO-8859-1").decode("cp1252")
+            except:
+                decoded = raw_text
         html_unescaped =Transformer.\
             __html_parser.unescape(decoded) 
         html_unescaped = re.sub(r"\r\n", " ", html_unescaped)

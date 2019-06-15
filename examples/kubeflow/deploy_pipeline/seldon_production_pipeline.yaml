@@ -4,35 +4,35 @@ kind: SeldonDeployment
 metadata:
   labels:
     app: seldon
-  name: "seldon-deployment-{{workflow.name}}"
+  name: "nlp-kubeflow-pipeline"
   namespace: kubeflow
 spec:
   annotations:
     project_name: NLP Pipeline
     deployment_version: v1
-  name: "seldon-deployment-{{workflow.name}}"
+  name: "nlp-kubeflow-pipeline"
   oauth_key: oauth-key
   oauth_secret: oauth-secret
   predictors:
   - componentSpecs:
     - spec:
         containers:
-        - image: clean_text_transformer:0.1
+        - image: seldonio/clean_text_transformer:0.1
           imagePullPolicy: IfNotPresent
           name: cleantext
           resources:
             requests:
               memory: 1Mi
-        - image: spacy_tokenizer:0.1
+        - image: seldonio/spacy_tokenizer:0.1
           imagePullPolicy: IfNotPresent
           name: spacytokenizer
-        - image: tfidf_vectorizer:0.1
+        - image: seldonio/tfidf_vectorizer:0.1
           imagePullPolicy: IfNotPresent
           name: tfidfvectorizer
           volumeMounts:
           - name: mypvc
             mountPath: /mnt
-        - image: lr_text_classifier:0.1
+        - image: seldonio/lr_text_classifier:0.1
           imagePullPolicy: IfNotPresent
           name: lrclassifier
           volumeMounts:

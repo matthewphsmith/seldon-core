@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: e2e-tweets-pod
+  namespace: kubeflow
+spec:
+  containers:
+  - name: e2e-tweets
+    image: seldonio/e2e_tweets:0.1
+    imagePullPolicy: Always
+    env:
+    - name: TWITTER_KEYWORD
+      value: "brexit"
+
