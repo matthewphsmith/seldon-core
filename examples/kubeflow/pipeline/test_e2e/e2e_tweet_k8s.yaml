@@ -11,4 +11,6 @@ spec:
     env:
     - name: TWITTER_KEYWORD
       value: "brexit"
+    - name: SELDON_URL
+      value: "http://138.91.163.25/seldon/kubeflow/nlp-kubeflow-pipeline/api/v0.1/predictions"
 
