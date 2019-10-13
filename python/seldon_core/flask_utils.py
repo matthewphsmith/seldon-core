@@ -3,6 +3,7 @@ import json
 from typing import Dict
 import base64
 
+
 def get_multi_form_data_request() -> Dict:
     """
     Parses a request submitted with Content-type:multipart/form-data
@@ -19,21 +20,22 @@ def get_multi_form_data_request() -> Dict:
     req_dict = {}
     for key in request.form:
         if key == 'strData':
-            req_dict[key]=request.form.get(key)
+            req_dict[key] = request.form.get(key)
         else:
-            req_dict[key]=json.loads(request.form.get(key))
+            req_dict[key] = json.loads(request.form.get(key))
     for fileKey in request.files:
         """
         The bytes data needs to be base64 encode because the protobuf trys to do base64 decode for bytes
         """
         if fileKey == 'binData':
-            req_dict[fileKey]=base64.b64encode(request.files[fileKey].read())
+            req_dict[fileKey] = base64.b64encode(request.files[fileKey].read())
         else:
             """
             This is the case when strData can be passed as file as well
             """
-            req_dict[fileKey]=request.files[fileKey].read().decode('utf-8')
+            req_dict[fileKey] = request.files[fileKey].read().decode('utf-8')
     return req_dict
+
 
 def get_request() -> Dict:
     """
@@ -67,7 +69,11 @@ def get_request() -> Dict:
 class SeldonMicroserviceException(Exception):
     status_code = 400
 
-    def __init__(self, message, status_code=None, payload=None, reason="MICROSERVICE_BAD_DATA"):
+    def __init__(self,
+                 message,
+                 status_code=None,
+                 payload=None,
+                 reason="MICROSERVICE_BAD_DATA"):
         Exception.__init__(self)
         self.message = message
         if status_code is not None:
@@ -76,8 +82,14 @@ class SeldonMicroserviceException(Exception):
         self.reason = reason
 
     def to_dict(self):
-        rv = {"status": {"status": 1, "info": self.message,
-                         "code": -1, "reason": self.reason}}
+        rv = {
+            "status": {
+                "status": 1,
+                "info": self.message,
+                "code": -1,
+                "reason": self.reason
+            }
+        }
         return rv
 
 

@@ -36,20 +36,40 @@ class Bunch(object):
 @mock.patch('requests.post', side_effect=mocked_requests_post_success)
 def test_predict_rest(mock_post):
     filename = join(dirname(__file__), "model-template-app", "contract.json")
-    args_dict = {"contract": filename, "host": "a", "port": 1000, "n_requests": 1, "batch_size": 1,
-                 "endpoint": "predict", "prnt": True, "grpc": False, "tensor": True}
+    args_dict = {
+        "contract": filename,
+        "host": "a",
+        "port": 1000,
+        "n_requests": 1,
+        "batch_size": 1,
+        "endpoint": "predict",
+        "prnt": True,
+        "grpc": False,
+        "tensor": True
+    }
     args = Bunch(args_dict)
     run_predict(args)
     print(mock_post.call_args[1])
     payload = json.loads(mock_post.call_args[1]["data"]["json"])
-    assert payload["data"]["names"] == ["sepal_length", "sepal_width", "petal_length","petal_width"]
+    assert payload["data"]["names"] == [
+        "sepal_length", "sepal_width", "petal_length", "petal_width"
+    ]
 
 
 @mock.patch('requests.post', side_effect=mocked_requests_post_success)
 def test_feedback_rest(mock_post):
     filename = join(dirname(__file__), "model-template-app", "contract.json")
-    args_dict = {"contract": filename, "host": "a", "port": 1000, "n_requests": 1, "batch_size": 1,
-                 "endpoint": "feedback", "prnt": True, "grpc": False, "tensor": True}
+    args_dict = {
+        "contract": filename,
+        "host": "a",
+        "port": 1000,
+        "n_requests": 1,
+        "batch_size": 1,
+        "endpoint": "feedback",
+        "prnt": True,
+        "grpc": False,
+        "tensor": True
+    }
     args = Bunch(args_dict)
     run_send_feedback(args)
 
@@ -57,8 +77,17 @@ def test_feedback_rest(mock_post):
 @mock.patch('requests.post', side_effect=mocked_requests_post_success)
 def test_predict_rest_categorical(mock_post):
     filename = join(dirname(__file__), "resources", "contract.json")
-    args_dict = {"contract": filename, "host": "a", "port": 1000, "n_requests": 1, "batch_size": 1,
-                 "endpoint": "predict", "prnt": True, "grpc": False, "tensor": False}
+    args_dict = {
+        "contract": filename,
+        "host": "a",
+        "port": 1000,
+        "n_requests": 1,
+        "batch_size": 1,
+        "endpoint": "predict",
+        "prnt": True,
+        "grpc": False,
+        "tensor": False
+    }
     args = Bunch(args_dict)
     run_predict(args)
 
@@ -72,7 +101,16 @@ def test_reconciliate_exception():
 def test_bad_contract():
     with pytest.raises(SeldonTesterException):
         filename = join(dirname(__file__), "resources", "bad_contract.json")
-        args_dict = {"contract": filename, "host": "a", "port": 1000, "n_requests": 1, "batch_size": 1,
-                     "endpoint": "feedback", "prnt": True, "grpc": False, "tensor": True}
+        args_dict = {
+            "contract": filename,
+            "host": "a",
+            "port": 1000,
+            "n_requests": 1,
+            "batch_size": 1,
+            "endpoint": "feedback",
+            "prnt": True,
+            "grpc": False,
+            "tensor": True
+        }
         args = Bunch(args_dict)
         run_send_feedback(args)

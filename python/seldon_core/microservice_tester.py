@@ -12,7 +12,8 @@ class SeldonTesterException(Exception):
         super().__init__(message)
 
 
-def gen_continuous(f_range: Tuple[Union[float, str], Union[float, str]], n: int) -> np.ndarray:
+def gen_continuous(f_range: Tuple[Union[float, str], Union[float, str]],
+                   n: int) -> np.ndarray:
     """
     Create a continuous feature based on given range
 
@@ -57,7 +58,8 @@ def reconciliate_cont_type(feature: np.ndarray, dtype: str) -> np.ndarray:
     elif dtype == "INT":
         return (feature + 0.5).astype(int).astype(float)
     else:
-        raise SeldonTesterException(f"Unknown dtype in reconciliate_cont_type {dtype}")
+        raise SeldonTesterException(
+            f"Unknown dtype in reconciliate_cont_type {dtype}")
 
 
 def gen_categorical(values: List[str], n: List[int]) -> np.ndarray:
@@ -100,7 +102,8 @@ def generate_batch(contract: Dict, n: int, field: str) -> np.ndarray:
         elif feature_def["ftype"] == "categorical":
             batch = gen_categorical(feature_def["values"], [n, 1])
         else:
-            raise SeldonTesterException(f"Unknown feature type {feature_def['ftype']}")
+            raise SeldonTesterException(
+                f"Unknown feature type {feature_def['ftype']}")
         feature_batches.append(batch)
     if len(ty_set) == 1:
         return np.concatenate(feature_batches, axis=1)
@@ -158,6 +161,7 @@ def get_class_names(contract: Dict) -> List[str]:
         names.append(feature["name"])
     return names
 
+
 def run_send_feedback(args):
     """
     Make a feedback call to microservice
@@ -189,10 +193,15 @@ def run_send_feedback(args):
         else:
             payload_type = "ndarray"
 
-        response_predict = sc.microservice(data=batch, transport=transport, payload_type=payload_type, method="predict")
-        response_feedback = sc.microservice_feedback(prediction_request=response_predict.request,
-                                                     prediction_response=response_predict.response, reward=1.0,
-                                                     transport=transport)
+        response_predict = sc.microservice(data=batch,
+                                           transport=transport,
+                                           payload_type=payload_type,
+                                           method="predict")
+        response_feedback = sc.microservice_feedback(
+            prediction_request=response_predict.request,
+            prediction_response=response_predict.response,
+            reward=1.0,
+            transport=transport)
         if args.prnt:
             print(f"RECEIVED RESPONSE:\n{response_feedback}\n")
 
@@ -222,7 +231,11 @@ def run_predict(args):
         transport = "grpc" if args.grpc else "rest"
         payload_type = "tensor" if args.tensor else "ndarray"
 
-        response = sc.microservice(data=batch, transport=transport, method="predict", payload_type=payload_type, names=feature_names)
+        response = sc.microservice(data=batch,
+                                   transport=transport,
+                                   method="predict",
+                                   payload_type=payload_type,
+                                   names=feature_names)
 
         if args.prnt:
             print(f"RECEIVED RESPONSE:\n{response.response}\n")
@@ -230,18 +243,27 @@ def run_predict(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("contract", type=str,
+    parser.add_argument("contract",
+                        type=str,
                         help="File that contains the data contract")
     parser.add_argument("host", type=str)
     parser.add_argument("port", type=int)
-    parser.add_argument("--endpoint", type=str,
-                        choices=["predict", "send-feedback"], default="predict")
+    parser.add_argument("--endpoint",
+                        type=str,
+                        choices=["predict", "send-feedback"],
+                        default="predict")
     parser.add_argument("-b", "--batch-size", type=int, default=1)
     parser.add_argument("-n", "--n-requests", type=int, default=1)
     parser.add_argument("--grpc", action="store_true")
     parser.add_argument("-t", "--tensor", action="store_true")
-    parser.add_argument("-p", "--prnt", action="store_true", help="Prints requests and responses")
-    parser.add_argument("--log-level", type=str, choices=["DEBUG", "INFO", "ERROR"], default="ERROR")
+    parser.add_argument("-p",
+                        "--prnt",
+                        action="store_true",
+                        help="Prints requests and responses")
+    parser.add_argument("--log-level",
+                        type=str,
+                        choices=["DEBUG", "INFO", "ERROR"],
+                        default="ERROR")
 
     args = parser.parse_args()
 

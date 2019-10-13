@@ -67,22 +67,14 @@ class UserObjectLowLevel(object):
     def transform_input_grpc(self, X):
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
         return request
 
     def transform_output_grpc(self, X):
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
         return request
 
@@ -96,22 +88,14 @@ class UserObjectLowLevelGrpc(object):
     def transform_input_grpc(self, X):
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
         return request
 
     def transform_output_grpc(self, X):
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
         return request
 
@@ -131,11 +115,7 @@ class UserObjectLowLevelRaw(object):
 
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         response = prediction_pb2.SeldonMessage(data=datadef)
         if is_proto:
             return response
@@ -151,11 +131,7 @@ class UserObjectLowLevelRaw(object):
 
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         response = prediction_pb2.SeldonMessage(data=datadef)
 
         if is_proto:
@@ -179,11 +155,7 @@ class UserObjectLowLevelRawInherited(SeldonComponent):
 
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         response = prediction_pb2.SeldonMessage(data=datadef)
         if is_proto:
             return response
@@ -199,11 +171,7 @@ class UserObjectLowLevelRawInherited(SeldonComponent):
 
         arr = np.array([9, 9])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         response = prediction_pb2.SeldonMessage(data=datadef)
         if is_proto:
             return response
@@ -221,7 +189,8 @@ def test_transformer_input_ok():
     assert rv.status_code == 200
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["ndarray"] == [1]
 
 
@@ -275,7 +244,8 @@ def test_transformer_input_bin_data():
     assert "binData" in j
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
 
 
 def test_transformer_input_bin_data_nparray():
@@ -291,7 +261,8 @@ def test_transformer_input_bin_data_nparray():
     assert j["data"]["tensor"]["values"] == [1, 2, 3]
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
 
 
 def test_tranform_input_no_json():
@@ -319,26 +290,31 @@ def test_transform_input_gets_meta():
     user_object = UserObject(ret_meta=True)
     app = get_rest_microservice(user_object)
     client = app.test_client()
-    rv = client.get('/transform-input?json={"meta":{"puid": "abc"},"data":{"ndarray":[]}}')
+    rv = client.get(
+        '/transform-input?json={"meta":{"puid": "abc"},"data":{"ndarray":[]}}')
     j = json.loads(rv.data)
     print(j)
     assert rv.status_code == 200
     assert j["meta"]["tags"] == {"inc_meta": {"puid": "abc"}}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
 
 
 def test_transform_output_gets_meta():
     user_object = UserObject(ret_meta=True)
     app = get_rest_microservice(user_object)
     client = app.test_client()
-    rv = client.get('/transform-output?json={"meta":{"puid": "abc"},"data":{"ndarray":[]}}')
+    rv = client.get(
+        '/transform-output?json={"meta":{"puid": "abc"},"data":{"ndarray":[]}}'
+    )
     j = json.loads(rv.data)
     print(j)
     assert rv.status_code == 200
     assert j["meta"]["tags"] == {"inc_meta": {"puid": "abc"}}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
 
 
 def test_transformer_output_ok():
@@ -351,7 +327,8 @@ def test_transformer_output_ok():
     assert rv.status_code == 200
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["ndarray"] == [1]
 
 
@@ -394,8 +371,8 @@ def test_transformer_output_bin_data():
     client = app.test_client()
     bdata = b"123"
     bdata_base64 = base64.b64encode(bdata).decode('utf-8')
-    rv = client.get(
-        '/transform-output?json={"binData":"' + bdata_base64 + '"}')
+    rv = client.get('/transform-output?json={"binData":"' + bdata_base64 +
+                    '"}')
     j = json.loads(rv.data)
     sm = prediction_pb2.SeldonMessage()
     # Check we can parse response
@@ -405,7 +382,8 @@ def test_transformer_output_bin_data():
     assert "binData" in j
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
 
 
 def test_transformer_output_bin_data_nparray():
@@ -414,14 +392,16 @@ def test_transformer_output_bin_data_nparray():
     client = app.test_client()
     bdata = b"123"
     bdata_base64 = base64.b64encode(bdata).decode('utf-8')
-    rv = client.get('/transform-output?json={"binData":"' + bdata_base64 + '"}')
+    rv = client.get('/transform-output?json={"binData":"' + bdata_base64 +
+                    '"}')
     j = json.loads(rv.data)
     print(j)
     assert rv.status_code == 200
     assert j["data"]["tensor"]["values"] == [1, 2, 3]
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
 
 
 def test_tranform_output_no_json():
@@ -450,11 +430,7 @@ def test_transform_input_proto_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.TransformInput(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -463,7 +439,8 @@ def test_transform_input_proto_ok():
     assert j["meta"]["tags"] == {"mytag": 1}
     # add default type
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["tensor"]["shape"] == [2, 1]
     assert j["data"]["tensor"]["values"] == [1, 2]
 
@@ -473,11 +450,7 @@ def test_transform_input_proto_lowlevel_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.TransformInput(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -513,11 +486,7 @@ def test_transform_output_proto_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.TransformOutput(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -526,7 +495,8 @@ def test_transform_output_proto_ok():
     assert j["meta"]["tags"] == {"mytag": 1}
     # add default type
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["tensor"]["shape"] == [2, 1]
     assert j["data"]["tensor"]["values"] == [1, 2]
 
@@ -536,11 +506,7 @@ def test_transform_output_proto_lowlevel_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.TransformOutput(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -581,11 +547,7 @@ def test_transform_input_proto_gets_meta():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     meta = prediction_pb2.Meta()
     metaJson = {"puid": "abc"}
     json_format.ParseDict(metaJson, meta)
@@ -597,7 +559,8 @@ def test_transform_input_proto_gets_meta():
     assert j["meta"]["tags"] == {"inc_meta": {"puid": "abc"}}
     # add default type
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["tensor"]["shape"] == [2, 1]
     assert j["data"]["tensor"]["values"] == [1, 2]
 
@@ -607,11 +570,7 @@ def test_transform_output_proto_gets_meta():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     meta = prediction_pb2.Meta()
     metaJson = {"puid": "abc"}
     json_format.ParseDict(metaJson, meta)
@@ -623,7 +582,8 @@ def test_transform_output_proto_gets_meta():
     assert j["meta"]["tags"] == {"inc_meta": {"puid": "abc"}}
     # add default type
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["tensor"]["shape"] == [2, 1]
     assert j["data"]["tensor"]["values"] == [1, 2]
 

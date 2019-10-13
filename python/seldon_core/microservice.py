@@ -78,11 +78,13 @@ def parse_parameters(parameters: Dict) -> Dict:
                 parsed_parameters[name] = type_dict[type_](value)
             except ValueError:
                 raise SeldonMicroserviceException(
-                    "Bad model parameter: " + name + " with value " + value + " can't be parsed as a " + type_,
+                    "Bad model parameter: " + name + " with value " + value +
+                    " can't be parsed as a " + type_,
                     reason="MICROSERVICE_BAD_PARAMETER")
             except KeyError:
                 raise SeldonMicroserviceException(
-                    "Bad model parameter type: " + type_ + " valid are INT, FLOAT, DOUBLE, STRING, BOOL",
+                    "Bad model parameter type: " + type_ +
+                    " valid are INT, FLOAT, DOUBLE, STRING, BOOL",
                     reason="MICROSERVICE_BAD_PARAMETER")
     return parsed_parameters
 
@@ -150,9 +152,9 @@ def setup_tracing(interface_name: str) -> object:
     # this call also sets opentracing.tracer
     return config.initialize_tracer()
 
-class StandaloneApplication(gunicorn.app.base.BaseApplication):
 
-    def __init__(self, app,user_object,options:Dict = None):
+class StandaloneApplication(gunicorn.app.base.BaseApplication):
+    def __init__(self, app, user_object, options: Dict = None):
         self.application = app
         self.user_object = user_object
         self.options = options
@@ -165,7 +167,7 @@ class StandaloneApplication(gunicorn.app.base.BaseApplication):
             self.cfg.set(key.lower(), value)
 
     def load(self):
-        logger.debug("LOADING APP %d",os.getpid())
+        logger.debug("LOADING APP %d", os.getpid())
         try:
             logger.debug("Calling user load method")
             self.user_object.load()
@@ -181,26 +183,46 @@ def main():
 
     sys.path.append(os.getcwd())
     parser = argparse.ArgumentParser()
-    parser.add_argument("interface_name", type=str,
+    parser.add_argument("interface_name",
+                        type=str,
                         help="Name of the user interface.")
     parser.add_argument("api_type", type=str, choices=["REST", "GRPC", "FBS"])
 
-    parser.add_argument("--service-type", type=str, choices=[
-        "MODEL", "ROUTER", "TRANSFORMER", "COMBINER", "OUTLIER_DETECTOR"], default="MODEL")
-    parser.add_argument("--persistence", nargs='?', default=0, const=1, type=int)
-    parser.add_argument("--parameters", type=str,
+    parser.add_argument("--service-type",
+                        type=str,
+                        choices=[
+                            "MODEL", "ROUTER", "TRANSFORMER", "COMBINER",
+                            "OUTLIER_DETECTOR"
+                        ],
+                        default="MODEL")
+    parser.add_argument("--persistence",
+                        nargs='?',
+                        default=0,
+                        const=1,
+                        type=int)
+    parser.add_argument("--parameters",
+                        type=str,
                         default=os.environ.get(PARAMETERS_ENV_NAME, "[]"))
     parser.add_argument("--log-level", type=str, default="INFO")
-    parser.add_argument("--tracing", nargs='?',
-                        default=int(os.environ.get("TRACING", "0")), const=1, type=int)
-    parser.add_argument("--workers", type=int, default=int(os.environ.get("GUNICORN_WORKERS", "1")))
+    parser.add_argument("--tracing",
+                        nargs='?',
+                        default=int(os.environ.get("TRACING", "0")),
+                        const=1,
+                        type=int)
+    parser.add_argument("--workers",
+                        type=int,
+                        default=int(os.environ.get("GUNICORN_WORKERS", "1")))
 
     args = parser.parse_args()
 
     parameters = parse_parameters(json.loads(args.parameters))
 
     # set flask trace jaeger extra tags
-    jaeger_extra_tags = list(filter(lambda x: (x != ""), [tag.strip() for tag in os.environ.get("JAEGER_EXTRA_TAGS", "").split(",")]))
+    jaeger_extra_tags = list(
+        filter(lambda x: (x != ""), [
+            tag.strip()
+            for tag in os.environ.get("JAEGER_EXTRA_TAGS", "").split(",")
+        ]))
     logger.info('Parse JAEGER_EXTRA_TAGS %s', jaeger_extra_tags)
     # set up log level
     log_level_raw = os.environ.get(LOG_LEVEL_ENV, args.log_level.upper())
@@ -216,11 +238,11 @@ def main():
 
     parts = args.interface_name.rsplit(".", 1)
     if len(parts) == 1:
-        logger.info("Importing %s",args.interface_name)
+        logger.info("Importing %s", args.interface_name)
         interface_file = importlib.import_module(args.interface_name)
         user_class = getattr(interface_file, args.interface_name)
     else:
-        logger.info("Importing submodule %s",parts)
+        logger.info("Importing submodule %s", parts)
         interface_file = importlib.import_module(parts[0])
         user_class = getattr(interface_file, parts[1])
 
@@ -242,12 +264,10 @@ def main():
     if args.tracing:
         tracer = setup_tracing(args.interface_name)
 
-
-
-
     if args.api_type == "REST":
 
         if args.workers > 1:
+
             def rest_prediction_server():
                 options = {
                     'bind': '%s:%s' % ('0.0.0.0', port),
@@ -258,7 +278,7 @@ def main():
                     'workers': args.workers,
                 }
                 app = seldon_microservice.get_rest_microservice(user_object)
-                StandaloneApplication(app,user_object,options=options).run()
+                StandaloneApplication(app, user_object, options=options).run()
 
             logger.info("REST gunicorn microservice running on port %i", port)
             server1_func = rest_prediction_server
@@ -283,6 +303,7 @@ def main():
             server1_func = rest_prediction_server
 
     elif args.api_type == "GRPC":
+
         def grpc_prediction_server():
 
             if args.tracing:
@@ -293,7 +314,9 @@ def main():
                 interceptor = None
 
             server = seldon_microservice.get_grpc_server(
-                user_object, annotations=annotations, trace_interceptor=interceptor)
+                user_object,
+                annotations=annotations,
+                trace_interceptor=interceptor)
 
             try:
                 user_object.load()
@@ -313,7 +336,8 @@ def main():
     else:
         server1_func = None
 
-    if hasattr(user_object, 'custom_service') and callable(getattr(user_object, 'custom_service')):
+    if hasattr(user_object, 'custom_service') and callable(
+            getattr(user_object, 'custom_service')):
         server2_func = user_object.custom_service
     else:
         server2_func = None

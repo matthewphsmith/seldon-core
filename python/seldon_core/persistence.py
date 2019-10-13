@@ -18,7 +18,8 @@ REDIS_PORT = os.environ.get("REDIS_SERVICE_PORT", 6379)
 DEFAULT_PUSH_FREQUENCY = 60
 
 
-def restore(user_class: Type[SeldonComponent], parameters: Dict) -> SeldonComponent:
+def restore(user_class: Type[SeldonComponent],
+            parameters: Dict) -> SeldonComponent:
     """
     Restore saved state from Redis
 
@@ -60,13 +61,13 @@ def persist(user_object: SeldonComponent, push_frequency: int = None):
 
     if push_frequency is None:
         push_frequency = DEFAULT_PUSH_FREQUENCY
-    logger.info("Creating persistence thread, with frequency %s", push_frequency)
+    logger.info("Creating persistence thread, with frequency %s",
+                push_frequency)
     persistence_thread = PersistenceThread(user_object, push_frequency)
     persistence_thread.start()
 
 
 class PersistenceThread(threading.Thread):
-
     def __init__(self, user_object, push_frequency):
         self.user_object = user_object
         self.push_frequency = push_frequency

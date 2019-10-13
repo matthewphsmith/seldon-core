@@ -15,7 +15,8 @@ class UserObject(object):
     def route(self, X, features_names):
         return 22
 
-    def send_feedback(self, features, feature_names, reward, truth, routing=-1):
+    def send_feedback(self, features, feature_names, reward, truth,
+                      routing=-1):
         print("Feedback called")
 
     def tags(self):
@@ -40,11 +41,7 @@ class UserObjectLowLevel(object):
     def route_grpc(self, request):
         arr = np.array([1])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(1, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(1, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
         return request
 
@@ -64,11 +61,7 @@ class UserObjectLowLevelGrpc(object):
     def route_grpc(self, request):
         arr = np.array([1])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(1, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(1, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
         return request
 
@@ -91,11 +84,7 @@ class UserObjectLowLevelRaw(object):
 
         arr = np.array([1])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(1, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(1, 1), values=arr))
         response = prediction_pb2.SeldonMessage(data=datadef)
         if is_proto:
             return response
@@ -120,7 +109,8 @@ def test_router_ok():
     assert rv.status_code == 200
     assert j["meta"]["tags"] == {"mytag": 1}
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["ndarray"] == [[22]]
 
 
@@ -183,7 +173,8 @@ def test_router_feedback_ok():
     app = get_rest_microservice(user_object)
     client = app.test_client()
     rv = client.get(
-        '/send-feedback?json={"request":{"data":{"ndarray":[]}},"response":{"meta":{"routing":{"1":1}}},"reward":1.0}')
+        '/send-feedback?json={"request":{"data":{"ndarray":[]}},"response":{"meta":{"routing":{"1":1}}},"reward":1.0}'
+    )
     j = json.loads(rv.data)
     print(j)
     assert rv.status_code == 200
@@ -193,7 +184,8 @@ def test_router_feedback_lowlevel_ok():
     user_object = UserObjectLowLevel()
     app = get_rest_microservice(user_object)
     client = app.test_client()
-    rv = client.get('/send-feedback?json={"request":{"data":{"ndarray":[]}},"reward":1.0}')
+    rv = client.get(
+        '/send-feedback?json={"request":{"data":{"ndarray":[]}},"reward":1.0}')
     j = json.loads(rv.data)
     print(j)
     assert rv.status_code == 200
@@ -204,11 +196,7 @@ def test_router_proto_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.Route(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -217,7 +205,8 @@ def test_router_proto_ok():
     assert j["meta"]["tags"] == {"mytag": 1}
     # add default type
     assert j["meta"]["metrics"][0]["key"] == user_object.metrics()[0]["key"]
-    assert j["meta"]["metrics"][0]["value"] == user_object.metrics()[0]["value"]
+    assert j["meta"]["metrics"][0]["value"] == user_object.metrics(
+    )[0]["value"]
     assert j["data"]["tensor"]["shape"] == [1, 1]
     assert j["data"]["tensor"]["values"] == [22]
 
@@ -227,11 +216,7 @@ def test_router_proto_lowlevel_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.Route(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -246,11 +231,7 @@ def test_router_proto_lowlevel_raw_ok():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     request = prediction_pb2.SeldonMessage(data=datadef)
     resp = app.Route(request, None)
     jStr = json_format.MessageToJson(resp)
@@ -265,11 +246,7 @@ def test_proto_feedback():
     app = SeldonModelGRPC(user_object)
     arr = np.array([1, 2])
     datadef = prediction_pb2.DefaultData(
-        tensor=prediction_pb2.Tensor(
-            shape=(2, 1),
-            values=arr
-        )
-    )
+        tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
     meta = prediction_pb2.Meta()
     metaJson = {}
     routing = {"1": 1}
@@ -278,7 +255,9 @@ def test_proto_feedback():
 
     request = prediction_pb2.SeldonMessage(data=datadef)
     response = prediction_pb2.SeldonMessage(meta=meta, data=datadef)
-    feedback = prediction_pb2.Feedback(request=request, response=response, reward=1.0)
+    feedback = prediction_pb2.Feedback(request=request,
+                                       response=response,
+                                       reward=1.0)
     resp = app.SendFeedback(feedback, None)
 
 

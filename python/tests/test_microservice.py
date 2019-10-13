@@ -15,8 +15,9 @@ import numpy as np
 import signal
 import unittest
 
+
 @contextmanager
-def start_microservice(app_location,tracing=False,grpc=False,envs={}):
+def start_microservice(app_location, tracing=False, grpc=False, envs={}):
     p = None
     try:
         # PYTHONUNBUFFERED=x
@@ -39,15 +40,12 @@ def start_microservice(app_location,tracing=False,grpc=False,envs={}):
                         env_vars[key] = value
         if grpc:
             env_vars["API_TYPE"] = "GRPC"
-        cmd = (
-            "seldon-core-microservice",
-            env_vars["MODEL_NAME"],
-            env_vars["API_TYPE"],
-            "--service-type", env_vars["SERVICE_TYPE"],
-            "--persistence", env_vars["PERSISTENCE"]
-        )
+        cmd = ("seldon-core-microservice", env_vars["MODEL_NAME"],
+               env_vars["API_TYPE"], "--service-type",
+               env_vars["SERVICE_TYPE"], "--persistence",
+               env_vars["PERSISTENCE"])
         if tracing:
-            cmd = cmd + ("--tracing",)
+            cmd = cmd + ("--tracing", )
         print("starting:", " ".join(cmd))
         print("cwd:", app_location)
         # stdout=PIPE, stderr=PIPE,
@@ -67,61 +65,67 @@ def start_microservice(app_location,tracing=False,grpc=False,envs={}):
             os.killpg(os.getpgid(p.pid), signal.SIGTERM)
 
 
-@pytest.mark.parametrize(
-        'tracing', [(False), (True)]
-    )
+@pytest.mark.parametrize('tracing', [(False), (True)])
 def test_model_template_app_rest(tracing):
-    with start_microservice(join(dirname(__file__), "model-template-app"),tracing=tracing):
+    with start_microservice(join(dirname(__file__), "model-template-app"),
+                            tracing=tracing):
         data = '{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}}'
-        response = requests.get(
-            "http://127.0.0.1:5000/predict", params="json=%s" % data)
+        response = requests.get("http://127.0.0.1:5000/predict",
+                                params="json=%s" % data)
         response.raise_for_status()
         assert response.json() == {
-            'data': {'names': ['t:0', 't:1'], 'ndarray': [[1.0, 2.0]]}, 'meta': {}}
+            'data': {
+                'names': ['t:0', 't:1'],
+                'ndarray': [[1.0, 2.0]]
+            },
+            'meta': {}
+        }
 
-        data = ('{"request":{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}},'
-                '"response":{"meta":{"routing":{"router":0}},"data":{"names":["a","b"],'
-                '"ndarray":[[1.0,2.0]]}},"reward":1}')
-        response = requests.get(
-            "http://127.0.0.1:5000/send-feedback", params="json=%s" % data)
+        data = (
+            '{"request":{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}},'
+            '"response":{"meta":{"routing":{"router":0}},"data":{"names":["a","b"],'
+            '"ndarray":[[1.0,2.0]]}},"reward":1}')
+        response = requests.get("http://127.0.0.1:5000/send-feedback",
+                                params="json=%s" % data)
         response.raise_for_status()
         assert response.json() == {'data': {'ndarray': []}, 'meta': {}}
 
 
-@pytest.mark.parametrize(
-        'tracing', [(False), (True)]
-    )
+@pytest.mark.parametrize('tracing', [(False), (True)])
 def test_model_template_app_rest_submodule(tracing):
-    with start_microservice(join(dirname(__file__), "model-template-app2"),tracing=tracing):
+    with start_microservice(join(dirname(__file__), "model-template-app2"),
+                            tracing=tracing):
         data = '{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}}'
-        response = requests.get(
-            "http://127.0.0.1:5000/predict", params="json=%s" % data)
+        response = requests.get("http://127.0.0.1:5000/predict",
+                                params="json=%s" % data)
         response.raise_for_status()
         assert response.json() == {
-            'data': {'names': ['t:0', 't:1'], 'ndarray': [[1.0, 2.0]]}, 'meta': {}}
+            'data': {
+                'names': ['t:0', 't:1'],
+                'ndarray': [[1.0, 2.0]]
+            },
+            'meta': {}
+        }
 
-        data = ('{"request":{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}},'
-                '"response":{"meta":{"routing":{"router":0}},"data":{"names":["a","b"],'
-                '"ndarray":[[1.0,2.0]]}},"reward":1}')
-        response = requests.get(
-            "http://127.0.0.1:5000/send-feedback", params="json=%s" % data)
+        data = (
+            '{"request":{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}},'
+            '"response":{"meta":{"routing":{"router":0}},"data":{"names":["a","b"],'
+            '"ndarray":[[1.0,2.0]]}},"reward":1}')
+        response = requests.get("http://127.0.0.1:5000/send-feedback",
+                                params="json=%s" % data)
         response.raise_for_status()
         assert response.json() == {'data': {'ndarray': []}, 'meta': {}}
 
 
-@pytest.mark.parametrize(
-        'tracing', [(False), (True)]
-    )
+@pytest.mark.parametrize('tracing', [(False), (True)])
 def test_model_template_app_grpc(tracing):
-    with start_microservice(join(dirname(__file__), "model-template-app"),tracing=tracing,grpc=True):
-        data = np.array([[1,2]])
-        datadef = prediction_pb2.DefaultData(
-            tensor = prediction_pb2.Tensor(
-                shape = data.shape,
-                values = data.flatten()
-            )
-        )
-        request = prediction_pb2.SeldonMessage(data = datadef)
+    with start_microservice(join(dirname(__file__), "model-template-app"),
+                            tracing=tracing,
+                            grpc=True):
+        data = np.array([[1, 2]])
+        datadef = prediction_pb2.DefaultData(tensor=prediction_pb2.Tensor(
+            shape=data.shape, values=data.flatten()))
+        request = prediction_pb2.SeldonMessage(data=datadef)
         channel = grpc.insecure_channel("0.0.0.0:5000")
         stub = prediction_pb2_grpc.ModelStub(channel)
         response = stub.Predict(request=request)
@@ -132,44 +136,60 @@ def test_model_template_app_grpc(tracing):
 
         arr = np.array([1, 2])
         datadef = prediction_pb2.DefaultData(
-            tensor=prediction_pb2.Tensor(
-                shape=(2, 1),
-                values=arr
-            )
-        )
+            tensor=prediction_pb2.Tensor(shape=(2, 1), values=arr))
         request = prediction_pb2.SeldonMessage(data=datadef)
-        feedback = prediction_pb2.Feedback(request=request,reward=1.0)
+        feedback = prediction_pb2.Feedback(request=request, reward=1.0)
         response = stub.SendFeedback(request=request)
 
 
 def test_model_template_app_tracing_config():
-    envs = {"JAEGER_CONFIG_PATH":join(dirname(__file__), "tracing_config/tracing.yaml")}
-    with start_microservice(join(dirname(__file__), "model-template-app"),tracing=True,envs=envs):
+    envs = {
+        "JAEGER_CONFIG_PATH":
+        join(dirname(__file__), "tracing_config/tracing.yaml")
+    }
+    with start_microservice(join(dirname(__file__), "model-template-app"),
+                            tracing=True,
+                            envs=envs):
         data = '{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}}'
-        response = requests.get(
-            "http://127.0.0.1:5000/predict", params="json=%s" % data)
+        response = requests.get("http://127.0.0.1:5000/predict",
+                                params="json=%s" % data)
         response.raise_for_status()
         assert response.json() == {
-            'data': {'names': ['t:0', 't:1'], 'ndarray': [[1.0, 2.0]]}, 'meta': {}}
+            'data': {
+                'names': ['t:0', 't:1'],
+                'ndarray': [[1.0, 2.0]]
+            },
+            'meta': {}
+        }
 
-        data = ('{"request":{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}},'
-                '"response":{"meta":{"routing":{"router":0}},"data":{"names":["a","b"],'
-                '"ndarray":[[1.0,2.0]]}},"reward":1}')
-        response = requests.get(
-            "http://127.0.0.1:5000/send-feedback", params="json=%s" % data)
+        data = (
+            '{"request":{"data":{"names":["a","b"],"ndarray":[[1.0,2.0]]}},'
+            '"response":{"meta":{"routing":{"router":0}},"data":{"names":["a","b"],'
+            '"ndarray":[[1.0,2.0]]}},"reward":1}')
+        response = requests.get("http://127.0.0.1:5000/send-feedback",
+                                params="json=%s" % data)
         response.raise_for_status()
         assert response.json() == {'data': {'ndarray': []}, 'meta': {}}
 
 
 def test_model_template_bad_params():
 
-    params = [join(dirname(__file__), "model-template-app"),"seldon-core-microservice","REST","--parameters",'[{"type":"FLOAT","name":"foo","value":"abc"}]']
-    with unittest.mock.patch('sys.argv',params):
+    params = [
+        join(dirname(__file__),
+             "model-template-app"), "seldon-core-microservice", "REST",
+        "--parameters", '[{"type":"FLOAT","name":"foo","value":"abc"}]'
+    ]
+    with unittest.mock.patch('sys.argv', params):
         with pytest.raises(SeldonMicroserviceException):
             microservice.main()
 
+
 def test_model_template_bad_params_type():
-    params = [join(dirname(__file__), "model-template-app"),"seldon-core-microservice","REST","--parameters",'[{"type":"FOO","name":"foo","value":"abc"}]']
-    with unittest.mock.patch('sys.argv',params):
+    params = [
+        join(dirname(__file__),
+             "model-template-app"), "seldon-core-microservice", "REST",
+        "--parameters", '[{"type":"FOO","name":"foo","value":"abc"}]'
+    ]
+    with unittest.mock.patch('sys.argv', params):
         with pytest.raises(SeldonMicroserviceException):
             microservice.main()

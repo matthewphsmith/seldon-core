@@ -47,14 +47,25 @@ def predict(
                 pass
 
         if is_proto:
-            (features, meta, datadef, data_type) = extract_request_parts(request)
-            client_response = client_predict(user_model, features, datadef.names, meta=meta)
-            return construct_response(user_model, False, request, client_response)
+            (features, meta, datadef,
+             data_type) = extract_request_parts(request)
+            client_response = client_predict(user_model,
+                                             features,
+                                             datadef.names,
+                                             meta=meta)
+            return construct_response(user_model, False, request,
+                                      client_response)
         else:
-            (features, meta, datadef, data_type) = extract_request_parts_json(request)
-            class_names = datadef["names"] if datadef and "names" in datadef else []
-            client_response = client_predict(user_model, features, class_names, meta=meta)
-            return construct_response_json(user_model, False, request, client_response)
+            (features, meta, datadef,
+             data_type) = extract_request_parts_json(request)
+            class_names = datadef[
+                "names"] if datadef and "names" in datadef else []
+            client_response = client_predict(user_model,
+                                             features,
+                                             class_names,
+                                             meta=meta)
+            return construct_response_json(user_model, False, request,
+                                           client_response)
 
 def send_feedback(
         user_model: Any,
@@ -77,12 +88,14 @@ def send_feedback(
 
     """
     if hasattr(user_model, "send_feedback_rest"):
-        logger.warning("send_feedback_rest is deprecated. Please use send_feedback_raw")
+        logger.warning(
+            "send_feedback_rest is deprecated. Please use send_feedback_raw")
         request_json = json_format.MessageToJson(request)
         response_json = user_model.send_feedback_rest(request_json)
         return json_to_seldon_message(response_json)
     elif hasattr(user_model, "send_feedback_grpc"):
-        logger.warning("send_feedback_grpc is deprecated. Please use send_feedback_raw")
+        logger.warning(
+            "send_feedback_grpc is deprecated. Please use send_feedback_raw")
         response_json = user_model.send_feedback_grpc(request)
         return json_to_seldon_message(response_json)
     else:
@@ -92,15 +105,19 @@ def send_feedback(
             except SeldonNotImplementedError:
                 pass
 
-        (datadef_request, features, truth, reward) = extract_feedback_request_parts(request)
+        (datadef_request, features, truth,
+         reward) = extract_feedback_request_parts(request)
         routing = request.response.meta.routing.get(predictive_unit_id)
-        client_response = client_send_feedback(user_model, features, datadef_request.names, reward, truth, routing)
+        client_response = client_send_feedback(user_model, features,
+                                               datadef_request.names, reward,
+                                               truth, routing)
 
         if client_response is None:
             client_response = np.array([])
         else:
             client_response = np.array(client_response)
-        return construct_response(user_model, False, request.request, client_response)
+        return construct_response(user_model, False, request.request,
+                                  client_response)
 
 
 def transform_input(
@@ -124,10 +141,14 @@ def transform_input(
     is_proto = isinstance(request, prediction_pb2.SeldonMessage)
 
     if hasattr(user_model, "transform_input_rest"):
-        logger.warning("transform_input_rest is deprecated. Please use transform_input_raw")
+        logger.warning(
+            "transform_input_rest is deprecated. Please use transform_input_raw"
+        )
         return user_model.transform_input_rest(request)
     elif hasattr(user_model, "transform_input_grpc"):
-        logger.warning("transform_input_grpc is deprecated. Please use transform_input_raw")
+        logger.warning(
+            "transform_input_grpc is deprecated. Please use transform_input_raw"
+        )
         return user_model.transform_input_grpc(request)
     else:
         if hasattr(user_model, "transform_input_raw"):
@@ -137,16 +158,25 @@ def transform_input(
                 pass
 
         if is_proto:
-            (features, meta, datadef, data_type) = extract_request_parts(request)
-            client_response = client_transform_input(
-                user_model, features, datadef.names, meta=meta)
-            return construct_response(user_model, False, request, client_response)
+            (features, meta, datadef,
+             data_type) = extract_request_parts(request)
+            client_response = client_transform_input(user_model,
+                                                     features,
+                                                     datadef.names,
+                                                     meta=meta)
+            return construct_response(user_model, False, request,
+                                      client_response)
         else:
-            (features, meta, datadef, data_type) = extract_request_parts_json(request)
-            class_names = datadef["names"] if datadef and "names" in datadef else []
-            client_response = client_transform_input(
-                user_model, features, class_names, meta=meta)
-            return construct_response_json(user_model, False, request, client_response)
+            (features, meta, datadef,
+             data_type) = extract_request_parts_json(request)
+            class_names = datadef[
+                "names"] if datadef and "names" in datadef else []
+            client_response = client_transform_input(user_model,
+                                                     features,
+                                                     class_names,
+                                                     meta=meta)
+            return construct_response_json(user_model, False, request,
+                                           client_response)
 
 def transform_output(
         user_model: Any,
@@ -169,10 +199,14 @@ def transform_output(
     is_proto = isinstance(request, prediction_pb2.SeldonMessage)
 
     if hasattr(user_model, "transform_output_rest"):
-        logger.warning("transform_input_rest is deprecated. Please use transform_input_raw")
+        logger.warning(
+            "transform_input_rest is deprecated. Please use transform_input_raw"
+        )
         return user_model.transform_output_rest(request)
     elif hasattr(user_model, "transform_output_grpc"):
-        logger.warning("transform_input_grpc is deprecated. Please use transform_input_raw")
+        logger.warning(
+            "transform_input_grpc is deprecated. Please use transform_input_raw"
+        )
         return user_model.transform_output_grpc(request)
     else:
         if hasattr(user_model, "transform_output_raw"):
@@ -182,16 +216,25 @@ def transform_output(
                 pass
 
         if is_proto:
-            (features, meta, datadef, data_type) = extract_request_parts(request)
-            client_response = client_transform_output(
-                user_model, features, datadef.names, meta=meta)
-            return construct_response(user_model, False, request, client_response)
+            (features, meta, datadef,
+             data_type) = extract_request_parts(request)
+            client_response = client_transform_output(user_model,
+                                                      features,
+                                                      datadef.names,
+                                                      meta=meta)
+            return construct_response(user_model, False, request,
+                                      client_response)
         else:
-            (features, meta, datadef, data_type) = extract_request_parts_json(request)
-            class_names = datadef["names"] if datadef and "names" in datadef else []
-            client_response = client_transform_output(
-                user_model, features, class_names, meta=meta)
-            return construct_response_json(user_model, False, request, client_response)
+            (features, meta, datadef,
+             data_type) = extract_request_parts_json(request)
+            class_names = datadef[
+                "names"] if datadef and "names" in datadef else []
+            client_response = client_transform_output(user_model,
+                                                      features,
+                                                      class_names,
+                                                      meta=meta)
+            return construct_response_json(user_model, False, request,
+                                           client_response)
 
 def route(
         user_model: Any,
@@ -225,24 +268,33 @@ def route(
                 pass
 
         if is_proto:
-            (features, meta, datadef, data_type) = extract_request_parts(request)
-            client_response = client_route(
-                user_model, features, datadef.names)
+            (features, meta, datadef,
+             data_type) = extract_request_parts(request)
+            client_response = client_route(user_model, features, datadef.names)
             if not isinstance(client_response, int):
-                raise SeldonMicroserviceException("Routing response must be int but got " + str(client_response))
+                raise SeldonMicroserviceException(
+                    "Routing response must be int but got " +
+                    str(client_response))
             client_response_arr = np.array([[client_response]])
-            return construct_response(user_model, False, request, client_response_arr)
+            return construct_response(user_model, False, request,
+                                      client_response_arr)
         else:
-            (features, meta, datadef, data_type) = extract_request_parts_json(request)
-            class_names = datadef["names"] if datadef and "names" in datadef else []
-            client_response = client_route(
-                user_model, features, class_names)
+            (features, meta, datadef,
+             data_type) = extract_request_parts_json(request)
+            class_names = datadef[
+                "names"] if datadef and "names" in datadef else []
+            client_response = client_route(user_model, features, class_names)
             if not isinstance(client_response, int):
-                raise SeldonMicroserviceException("Routing response must be int but got " + str(client_response))
+                raise SeldonMicroserviceException(
+                    "Routing response must be int but got " +
+                    str(client_response))
             client_response_arr = np.array([[client_response]])
-            return construct_response_json(user_model, False, request, client_response_arr)
+            return construct_response_json(user_model, False, request,
+                                           client_response_arr)
 
-def aggregate(user_model: Any, request: prediction_pb2.SeldonMessageList) -> prediction_pb2.SeldonMessage:
+
+def aggregate(user_model: Any, request: prediction_pb2.SeldonMessageList
+              ) -> prediction_pb2.SeldonMessage:
     """
     Aggregate a list of payloads
 
@@ -261,10 +313,12 @@ def aggregate(user_model: Any, request: prediction_pb2.SeldonMessageList) -> pre
     is_proto = isinstance(request, prediction_pb2.SeldonMessageList)
 
     if hasattr(user_model, "aggregate_rest"):
-        logger.warning("aggregate_rest is deprecated. Please use aggregate_raw")
+        logger.warning(
+            "aggregate_rest is deprecated. Please use aggregate_raw")
         return user_model.aggregate_rest(request)
     elif hasattr(user_model, "aggregate_grpc"):
-        logger.warning("aggregate_grpc is deprecated. Please use aggregate_raw")
+        logger.warning(
+            "aggregate_grpc is deprecated. Please use aggregate_raw")
         return user_model.aggregate_grpc(request)
     else:
         if hasattr(user_model, "aggregate_raw"):
@@ -278,26 +332,35 @@ def aggregate(user_model: Any, request: prediction_pb2.SeldonMessageList) -> pre
             names_list = []
 
             for msg in request.seldonMessages:
-                (features, meta, datadef, data_type) = extract_request_parts(msg)
+                (features, meta, datadef,
+                 data_type) = extract_request_parts(msg)
                 features_list.append(features)
                 names_list.append(datadef.names)
 
-            client_response = client_aggregate(user_model, features_list, names_list)
-            return construct_response(user_model, False, request.seldonMessages[0], client_response)
+            client_response = client_aggregate(user_model, features_list,
+                                               names_list)
+            return construct_response(user_model, False,
+                                      request.seldonMessages[0],
+                                      client_response)
         else:
             features_list = []
             names_list = []
 
             if "seldonMessages" not in request or \
                     not isinstance(request["seldonMessages"], list):
-                raise SeldonMicroserviceException(f"Invalid request data type: {request}")
+                raise SeldonMicroserviceException(
+                    f"Invalid request data type: {request}")
 
             for msg in request["seldonMessages"]:
-                (features, meta, datadef, data_type) = extract_request_parts_json(msg)
-                class_names = datadef["names"] if datadef and "names" in datadef else []
+                (features, meta, datadef,
+                 data_type) = extract_request_parts_json(msg)
+                class_names = datadef[
+                    "names"] if datadef and "names" in datadef else []
                 features_list.append(features)
                 names_list.append(class_names)
 
-            client_response = client_aggregate(user_model, features_list, names_list)
-            return construct_response_json(user_model, False, request["seldonMessages"][0], client_response)
-
+            client_response = client_aggregate(user_model, features_list,
+                                               names_list)
+            return construct_response_json(user_model, False,
+                                           request["seldonMessages"][0],
+                                           client_response)
