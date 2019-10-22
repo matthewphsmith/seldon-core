@@ -13,23 +13,27 @@ JOBLIB_FILE = "model.joblib"
 
 
 class SKLearnServer(SeldonComponent):
-    def __init__(self, model_uri: str = None,  method: str = "predict_proba"):
+    def __init__(self, model_uri: str = None, method: str = "predict_proba"):
         super().__init__()
         self.model_uri = model_uri
         self.method = method
         self.ready = False
-        print("Model uri:",self.model_uri)
-        print("method:",self.method)
+        print("Model uri:", self.model_uri)
+        print("method:", self.method)
         self.load()
 
     def load(self):
         print("load")
-        model_file = os.path.join(seldon_core.Storage.download(self.model_uri), JOBLIB_FILE)
+        model_file = os.path.join(
+            seldon_core.Storage.download(self.model_uri), JOBLIB_FILE
+        )
         print("model file", model_file)
         self._joblib = joblib.load(model_file)
         self.ready = True
 
-    def predict(self, X: np.ndarray, names: Iterable[str], meta: Dict = None) -> Union[np.ndarray, List, str, bytes]:
+    def predict(
+        self, X: np.ndarray, names: Iterable[str], meta: Dict = None
+    ) -> Union[np.ndarray, List, str, bytes]:
         try:
             if not self.ready:
                 self.load()

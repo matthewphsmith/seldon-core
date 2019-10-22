@@ -1,16 +1,15 @@
-
 class MyModel(object):
     """
     Model template. You can load your model parameters in __init__ from a location accessible at runtime
     """
-    
+
     def __init__(self):
         """
         Add any initialization parameters. These will be passed at runtime from the graph definition parameters defined in your seldondeployment kubernetes resource manifest.
         """
         print("Initializing")
 
-    def predict(self,X,features_names):
+    def predict(self, X, features_names):
         """
         Return a prediction.
 
@@ -22,7 +21,7 @@ class MyModel(object):
         print("Predict called - will run idenity function")
         return X
 
-    def send_feedback(self,features,feature_names,reward,truth):
+    def send_feedback(self, features, feature_names, reward, truth):
         """
         Handle feedback
 

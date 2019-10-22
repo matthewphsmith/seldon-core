@@ -12,8 +12,8 @@ log = logging.getLogger()
 
 MLFLOW_SERVER = "model"
 
-class MLFlowServer(SeldonComponent):
 
+class MLFlowServer(SeldonComponent):
     def __init__(self, model_uri: str):
         super().__init__()
         log.info(f"Creating MLFLow server with URI: {model_uri}")
@@ -27,23 +27,19 @@ class MLFlowServer(SeldonComponent):
         self.ready = True
 
     def predict(
-                self,
-                X: np.ndarray,
-                feature_names: Iterable[str] = [],
-                meta: Dict = None
-            ) -> Union[np.ndarray, List, Dict, str, bytes]:
+        self, X: np.ndarray, feature_names: Iterable[str] = [], meta: Dict = None
+    ) -> Union[np.ndarray, List, Dict, str, bytes]:
 
         log.info(f"Requesting prediction with: {X}")
         if not self.ready:
             self.load()
-            # TODO: Make sure this doesn't get called from here, but 
+            # TODO: Make sure this doesn't get called from here, but
             #   from the actual python wrapper. Raise exception instead
-            #raise requests.HTTPError("Model not loaded yet")
-        if not feature_names is None and len(feature_names)>0:
+            # raise requests.HTTPError("Model not loaded yet")
+        if not feature_names is None and len(feature_names) > 0:
             df = pd.DataFrame(data=X, columns=feature_names)
         else:
             df = pd.DataFrame(data=X)
         result = self._model.predict(X)
         log.info(f"Prediction result: {result}")
         return result
-

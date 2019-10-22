@@ -1,9 +1,9 @@
-from <your_loading_library> import <your_loading_function>
+from YOUR_LOADING_LIBRARY import YOUR_LOADING_FUNCTION
+
 
 class ModelName(object):
+    def __init__(self, YOUR_MODEL_FILE):
+        self.model = YOUR_LOADING_LIBRARY(YOUR_MODEL_FILE)
 
-    def __init__(self):
-        self.model = <your_loading_function>(<your_model_file>)
-
-    def predict(self,X,features_names):
+    def predict(self, X, features_names):
         return self.model.predict(X)

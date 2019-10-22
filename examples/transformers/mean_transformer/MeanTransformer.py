@@ -1,7 +1,7 @@
 import numpy as np
 
-class MeanTransformer(object):
 
+class MeanTransformer(object):
     def __init__(self):
         pass
 
@@ -9,4 +9,4 @@ class MeanTransformer(object):
         X = np.array(X)
         if X.max() == X.min():
             return np.zeros_like(X)
-        return (X-X.min())/(X.max()-X.min())
+        return (X - X.min()) / (X.max() - X.min())
