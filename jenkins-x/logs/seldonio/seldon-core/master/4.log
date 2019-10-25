@@ -1,0 +1,57 @@
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-credential-initializer-9c2pb[0m
+{"level":"warn","ts":1572020899.622512,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1572020899.6236663,"logger":"fallback-logger","caller":"creds-init/main.go:40","msg":"Credentials initialized."}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-working-dir-initializer-pgbf5[0m
+{"level":"warn","ts":1572020900.0784895,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: open /var/run/ko/HEAD: no such file or directory"}
+{"level":"info","ts":1572020900.0797675,"logger":"fallback-logger","caller":"bash/main.go:65","msg":"Successfully executed command \"mkdir -p /workspace/source\""}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-place-tools[0m
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-git-source-meta-seldonio-seldon-core-maste-k84qh[0m
+{"level":"warn","ts":1572020906.1760197,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1572020908.5807009,"logger":"fallback-logger","caller":"git/git.go:102","msg":"Successfully cloned https://github.com/seldonio/seldon-core.git @ e60782d5c2e56cc8611203536ea326f3162e6cc3 in path /workspace/source"}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-git-merge[0m
+Using SHAs from PULL_REFS=master:e60782d5c2e56cc8611203536ea326f3162e6cc3
+WARNING: no SHAs to merge, falling back to initial cloned commit
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-merge-pull-refs[0m
+SKIP merge-pull-refs: Nothing to merge
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-q2c8r-4[0m stage [32mmeta-pipeline[0m and container [32mstep-create-effective-pipeline[0m
+Deleting and cloning the Jenkins X versions repo
+Cloning the Jenkins X versions repo https://github.com/jenkins-x/jenkins-x-versions.git with revision v1.0.157 to /builder/home/.**/jenkins-x-versions
+panic: runtime error: invalid memory address or nil pointer dereference
+[signal SIGSEGV: segmentation violation code=0x1 addr=0x10 pc=0x12130c4]
+
+goroutine 1 [running]:
+github.com/jenkins-x/**/pkg/tekton/syntax.(*Agent).GetImage(...)
+	/workspace/source/pkg/tekton/syntax/pipeline.go:440
+github.com/jenkins-x/**/pkg/jenkinsfile.(*PipelineConfig).createPipelineSteps(0xc000ae7600, 0xc000630c00, 0x4bb0428, 0x5, 0xc000270940, 0xc000a4aa20, 0x0, 0x0, 0x4c0d33a, 0x1f, ...)
+	/workspace/source/pkg/jenkinsfile/pipeline.go:805 +0x54
+github.com/jenkins-x/**/pkg/jenkinsfile.(*PipelineConfig).createStageForBuildPack(0xc000ae7600, 0xc000270940, 0xc000a4aa20, 0x0, 0x0, 0x4c0d33a, 0x1f, 0xc000c112a0, 0x11, 0xc000383e68, ...)
+	/workspace/source/pkg/jenkinsfile/pipeline.go:956 +0x264
+github.com/jenkins-x/**/pkg/jenkinsfile.(*PipelineConfig).CreatePipelineForBuildPack(0xc000ae7600, 0xc000270940, 0xc000a4aa20, 0x0, 0x0, 0x4c0d33a, 0x1f, 0xc000c112a0, 0x11, 0xc000383e68, ...)
+	/workspace/source/pkg/jenkinsfile/pipeline.go:979 +0x159
+github.com/jenkins-x/**/pkg/cmd/step/syntax.(*StepSyntaxEffectiveOptions).createPipelineForKind(0xc000146ea0, 0x4bb459b, 0x7, 0xc000270940, 0xc00073dec0, 0xc000270940, 0x0, 0x0, 0x0, 0x0, ...)
+	/workspace/source/pkg/cmd/step/syntax/step_syntax_effective.go:419 +0x7a0
+github.com/jenkins-x/**/pkg/cmd/step/syntax.(*StepSyntaxEffectiveOptions).CreateEffectivePipeline(0xc000146ea0, 0xc0005cef60, 0x58, 0xc000112420, 0xc000365840, 0x1f, 0xc000434210, 0x58, 0x0, 0x0)
+	/workspace/source/pkg/cmd/step/syntax/step_syntax_effective.go:344 +0x454
+github.com/jenkins-x/**/pkg/cmd/step/syntax.(*StepSyntaxEffectiveOptions).Run(0xc000146ea0, 0x0, 0x0)
+	/workspace/source/pkg/cmd/step/syntax/step_syntax_effective.go:234 +0x54a
+github.com/jenkins-x/**/pkg/cmd/step/syntax.NewCmdStepSyntaxEffective.func1(0xc0006d9b80, 0xc0003be6c0, 0x4, 0x24)
+	/workspace/source/pkg/cmd/step/syntax/step_syntax_effective.go:89 +0x6f
+github.com/spf13/cobra.(*Command).execute(0xc0006d9b80, 0xc0003be240, 0x24, 0x24, 0xc0006d9b80, 0xc0003be240)
+	/workspace/go/pkg/mod/github.com/spf13/cobra@v0.0.3/command.go:766 +0x2ae
+github.com/spf13/cobra.(*Command).ExecuteC(0xc000390500, 0xc000473fc0, 0x58d3c40, 0xc0000b6000)
+	/workspace/go/pkg/mod/github.com/spf13/cobra@v0.0.3/command.go:852 +0x2ec
+github.com/spf13/cobra.(*Command).Execute(...)
+	/workspace/go/pkg/mod/github.com/spf13/cobra@v0.0.3/command.go:800
+github.com/jenkins-x/**/cmd/**/app.Run(0x0, 0x0, 0x0, 0xc0009a5f88, 0xc00009e058)
+	/workspace/source/cmd/**/app/**.go:19 +0x185
+main.main()
+	/workspace/source/cmd/**/**.go:11 +0x32
+[31m
+Pipeline failed on stage 'meta-pipeline' : container 'step-create-effective-pipeline'. The execution of the pipeline has stopped.[0m
