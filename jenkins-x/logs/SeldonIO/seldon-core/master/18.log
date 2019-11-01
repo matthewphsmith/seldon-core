@@ -1,0 +1,32 @@
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-credential-initializer-nzzzq[0m
+{"level":"warn","ts":1572609232.4514198,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1572609232.4524543,"logger":"fallback-logger","caller":"creds-init/main.go:40","msg":"Credentials initialized."}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-working-dir-initializer-q58b7[0m
+{"level":"warn","ts":1572609233.4655898,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: open /var/run/ko/HEAD: no such file or directory"}
+{"level":"info","ts":1572609233.4692113,"logger":"fallback-logger","caller":"bash/main.go:65","msg":"Successfully executed command \"mkdir -p /workspace/source\""}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-place-tools[0m
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-git-source-meta-seldonio-seldon-core-maste-8vxs9[0m
+{"level":"warn","ts":1572609239.579361,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1572609242.5475986,"logger":"fallback-logger","caller":"git/git.go:102","msg":"Successfully cloned https://github.com/SeldonIO/seldon-core.git @ 05037aa5e5b6cfddf2c54d8c3f2c7f4c131f056d in path /workspace/source"}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-git-merge[0m
+Using SHAs from PULL_REFS=master:05037aa5e5b6cfddf2c54d8c3f2c7f4c131f056d
+WARNING: no SHAs to merge, falling back to initial cloned commit
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-merge-pull-refs[0m
+SKIP merge-pull-refs: Nothing to merge
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-create-effective-pipeline[0m
+Effective pipeline written to jenkins-x-release-effective.yml
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-z927w-18[0m stage [32mmeta-pipeline[0m and container [32mstep-create-tekton-crds[0m
+running command: echo "skipping until 4624 is resolved..."
+skipping until 4624 is resolved...
+
+error: failed to set the version on release pipelines: failed to read file /workspace/source/VERSION
+[31m
+Pipeline failed on stage 'meta-pipeline' : container 'step-create-tekton-crds'. The execution of the pipeline has stopped.[0m
