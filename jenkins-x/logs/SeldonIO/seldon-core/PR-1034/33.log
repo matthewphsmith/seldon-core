@@ -1,0 +1,55 @@
+
+Showing logs for build [32mseldonio-seldon-core-pr-1034-li-6h5hh-33[0m stage [32mpython-lint-task[0m and container [32mstep-credential-initializer-6b8ps[0m
+{"level":"warn","ts":1572802673.9945967,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1572802673.9958181,"logger":"fallback-logger","caller":"creds-init/main.go:40","msg":"Credentials initialized."}
+
+Showing logs for build [32mseldonio-seldon-core-pr-1034-li-6h5hh-33[0m stage [32mpython-lint-task[0m and container [32mstep-working-dir-initializer-bx28f[0m
+{"level":"warn","ts":1572802674.994187,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: open /var/run/ko/HEAD: no such file or directory"}
+{"level":"info","ts":1572802674.99991,"logger":"fallback-logger","caller":"bash/main.go:65","msg":"Successfully executed command \"mkdir -p /workspace/source\""}
+
+Showing logs for build [32mseldonio-seldon-core-pr-1034-li-6h5hh-33[0m stage [32mpython-lint-task[0m and container [32mstep-place-tools[0m
+
+Showing logs for build [32mseldonio-seldon-core-pr-1034-li-6h5hh-33[0m stage [32mpython-lint-task[0m and container [32mstep-git-source-seldonio-seldon-core-pr-1034-li-gs4cf[0m
+{"level":"warn","ts":1572802682.3128915,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1572802685.51575,"logger":"fallback-logger","caller":"git/git.go:102","msg":"Successfully cloned https://github.com/SeldonIO/seldon-core.git @ master in path /workspace/source"}
+
+Showing logs for build [32mseldonio-seldon-core-pr-1034-li-6h5hh-33[0m stage [32mpython-lint-task[0m and container [32mstep-git-merge[0m
+Using SHAs from PULL_REFS=master:176be12ce4ae5c660e013a1aebc16c3427e24025,1034:54e9ddf85bb1e9af7999b7408a6d188866694130
+DEBUG: ran git fetch --unshallow origin 54e9ddf85bb1e9af7999b7408a6d188866694130: 176be12ce4ae5c660e013a1aebc16c3427e24025: in 
+DEBUG: ran git checkout master in 
+DEBUG: ran git reset --hard 176be12ce4ae5c660e013a1aebc16c3427e24025 in 
+DEBUG: ran clean --force -d . in 
+DEBUG: ran git merge 54e9ddf85bb1e9af7999b7408a6d188866694130 in 
+Merged SHA 54e9ddf85bb1e9af7999b7408a6d188866694130 with commit message 'Removing retry, attempting direct' into base branch master
+Merged SHA 3bffd6447dd3cdff29be0473b7cb0368cc98d227 with commit message 'Added loop break' into base branch master
+Merged SHA bd7a574dad79b67b0b4ae09f78032d2e4650e9d7 with commit message 'Shortened test and added logging' into base branch master
+Merged SHA 214149e9681f60c3fbf19fca8354b5d73ee1f64a with commit message 'Shortened test and added logging' into base branch master
+Merged SHA f235036644edd4e730b9c3c5818abc20866c33a1 with commit message 'Merge remote-tracking branch 'upstream/master' into 1031_intermittent_failures' into base branch master
+Merged SHA 6d4273b36c8d0c80203d6cccefe761f8f2639a62 with commit message 'Shortened test and added logging' into base branch master
+Merged SHA cb287ca838b9eb5056c34de0d5e94a0292bac7f7 with commit message 'Running all tests' into base branch master
+Merged SHA 63531512531a598d0279ebcfd3a34dabcff7a860 with commit message 'Increased time and number of iterations' into base branch master
+Merged SHA 95939f4277e98d71e3ef953cfd88bd8c9bd4d516 with commit message 'Added specific file so current test checks are faster' into base branch master
+Merged SHA c0426662d269a719480a4866c22d4fc2ed9e377d with commit message 'Added sleep time to failed request and ran linter' into base branch master
+Merged SHA d5951c8c4e0dbcd321b374414e1dbdee6ce62917 with commit message 'Added k8s config file to run e2e tests in pod' into base branch master
+
+Showing logs for build [32mseldonio-seldon-core-pr-1034-li-6h5hh-33[0m stage [32mpython-lint-task[0m and container [32mstep-python-lint[0m
+make: Entering directory '/workspace/source/python'
+pip install black==19.3b0
+Collecting black==19.3b0
+  Downloading https://files.pythonhosted.org/packages/30/62/cf549544a5fe990bbaeca21e9c419501b2de7a701ab0afb377bc81676600/black-19.3b0-py36-none-any.whl (89kB)
+Collecting click>=6.5
+  Downloading https://files.pythonhosted.org/packages/fa/37/45185cb5abbc30d7257104c434fe0b07e5a195a6847506c074527aa599ec/Click-7.0-py2.py3-none-any.whl (81kB)
+Collecting toml>=0.9.4
+  Downloading https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
+Collecting appdirs
+  Downloading https://files.pythonhosted.org/packages/56/eb/810e700ed1349edde4cbdc1b2a21e28cdf115f9faf263f6bbf8447c1abf3/appdirs-1.4.3-py2.py3-none-any.whl
+Collecting attrs>=18.1.0
+  Downloading https://files.pythonhosted.org/packages/a2/db/4313ab3be961f7a763066401fb77f7748373b6094076ae2bda2806988af6/attrs-19.3.0-py2.py3-none-any.whl
+Installing collected packages: click, toml, appdirs, attrs, black
+Successfully installed appdirs-1.4.3 attrs-19.3.0 black-19.3b0 click-7.0 toml-0.10.0
+black \
+	--check ./ ../testing \
+	--exclude "(testing/scripts/proto|seldon_core/proto/|.eggs)"
+All done! ✨ 🍰 ✨
+50 files would be left unchanged.
+make: Leaving directory '/workspace/source/python'
