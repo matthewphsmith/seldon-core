@@ -1,0 +1,45 @@
+
+Showing logs for build [32mseldonio-seldon-core-pr-1062-li-1[0m stage [32mpython-lint-task[0m and container [32mstep-credential-initializer-cc97m[0m
+{"level":"warn","ts":1573031110.393533,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1573031110.3952866,"logger":"fallback-logger","caller":"creds-init/main.go:40","msg":"Credentials initialized."}
+
+Showing logs for build [32mseldonio-seldon-core-pr-1062-li-1[0m stage [32mpython-lint-task[0m and container [32mstep-working-dir-initializer-v992r[0m
+{"level":"warn","ts":1573031111.273708,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: open /var/run/ko/HEAD: no such file or directory"}
+{"level":"info","ts":1573031111.2762218,"logger":"fallback-logger","caller":"bash/main.go:65","msg":"Successfully executed command \"mkdir -p /workspace/source\""}
+
+Showing logs for build [32mseldonio-seldon-core-pr-1062-li-1[0m stage [32mpython-lint-task[0m and container [32mstep-place-tools[0m
+
+Showing logs for build [32mseldonio-seldon-core-pr-1062-li-1[0m stage [32mpython-lint-task[0m and container [32mstep-git-source-seldonio-seldon-core-pr-1062-li-n8jpd[0m
+{"level":"warn","ts":1573031119.4669545,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1573031127.501059,"logger":"fallback-logger","caller":"git/git.go:102","msg":"Successfully cloned https://github.com/SeldonIO/seldon-core.git @ master in path /workspace/source"}
+
+Showing logs for build [32mseldonio-seldon-core-pr-1062-li-1[0m stage [32mpython-lint-task[0m and container [32mstep-git-merge[0m
+Using SHAs from PULL_REFS=master:41d522fb4aa8fa1d93cd4600cf34460be4545de5,1062:9c9d0ae90d977969577f2f74d7f9e0e982cee630
+DEBUG: ran git fetch --unshallow origin 9c9d0ae90d977969577f2f74d7f9e0e982cee630: 41d522fb4aa8fa1d93cd4600cf34460be4545de5: in 
+DEBUG: ran git checkout master in 
+DEBUG: ran git reset --hard 41d522fb4aa8fa1d93cd4600cf34460be4545de5 in 
+DEBUG: ran clean --force -d . in 
+DEBUG: ran git merge 9c9d0ae90d977969577f2f74d7f9e0e982cee630 in 
+Merged SHA 9c9d0ae90d977969577f2f74d7f9e0e982cee630 with commit message '[Security] Bump pillow from 6.0.0 to 6.2.0 in /python' into base branch master
+
+Showing logs for build [32mseldonio-seldon-core-pr-1062-li-1[0m stage [32mpython-lint-task[0m and container [32mstep-python-lint[0m
+make: Entering directory '/workspace/source/python'
+pip install black==19.3b0
+Collecting black==19.3b0
+  Downloading https://files.pythonhosted.org/packages/30/62/cf549544a5fe990bbaeca21e9c419501b2de7a701ab0afb377bc81676600/black-19.3b0-py36-none-any.whl (89kB)
+Collecting click>=6.5
+  Downloading https://files.pythonhosted.org/packages/fa/37/45185cb5abbc30d7257104c434fe0b07e5a195a6847506c074527aa599ec/Click-7.0-py2.py3-none-any.whl (81kB)
+Collecting appdirs
+  Downloading https://files.pythonhosted.org/packages/56/eb/810e700ed1349edde4cbdc1b2a21e28cdf115f9faf263f6bbf8447c1abf3/appdirs-1.4.3-py2.py3-none-any.whl
+Collecting attrs>=18.1.0
+  Downloading https://files.pythonhosted.org/packages/a2/db/4313ab3be961f7a763066401fb77f7748373b6094076ae2bda2806988af6/attrs-19.3.0-py2.py3-none-any.whl
+Collecting toml>=0.9.4
+  Downloading https://files.pythonhosted.org/packages/a2/12/ced7105d2de62fa7c8fb5fce92cc4ce66b57c95fb875e9318dba7f8c5db0/toml-0.10.0-py2.py3-none-any.whl
+Installing collected packages: click, appdirs, attrs, toml, black
+Successfully installed appdirs-1.4.3 attrs-19.3.0 black-19.3b0 click-7.0 toml-0.10.0
+black \
+	--check ./ ../testing \
+	--exclude "(testing/scripts/proto|seldon_core/proto/|.eggs)"
+All done! ✨ 🍰 ✨
+50 files would be left unchanged.
+make: Leaving directory '/workspace/source/python'
