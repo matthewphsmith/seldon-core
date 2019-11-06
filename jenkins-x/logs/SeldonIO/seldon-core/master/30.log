@@ -1,0 +1,32 @@
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-credential-initializer-7wgp6[0m
+{"level":"warn","ts":1573031798.3838904,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1573031798.3848276,"logger":"fallback-logger","caller":"creds-init/main.go:40","msg":"Credentials initialized."}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-working-dir-initializer-md45c[0m
+{"level":"warn","ts":1573031799.3786333,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: open /var/run/ko/HEAD: no such file or directory"}
+{"level":"info","ts":1573031799.503867,"logger":"fallback-logger","caller":"bash/main.go:65","msg":"Successfully executed command \"mkdir -p /workspace/source\""}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-place-tools[0m
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-git-source-meta-seldonio-seldon-core-maste-67ssr[0m
+{"level":"warn","ts":1573031804.537461,"logger":"fallback-logger","caller":"logging/config.go:69","msg":"Fetch GitHub commit ID from kodata failed: \"ref: refs/heads/master\" is not a valid GitHub commit ID"}
+{"level":"info","ts":1573031807.9671903,"logger":"fallback-logger","caller":"git/git.go:102","msg":"Successfully cloned https://github.com/SeldonIO/seldon-core.git @ ef12dc4bab8bc75a6ed70e6bf52b3151284d0d54 in path /workspace/source"}
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-git-merge[0m
+Using SHAs from PULL_REFS=master:ef12dc4bab8bc75a6ed70e6bf52b3151284d0d54
+WARNING: no SHAs to merge, falling back to initial cloned commit
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-merge-pull-refs[0m
+SKIP merge-pull-refs: Nothing to merge
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-create-effective-pipeline[0m
+Effective pipeline written to jenkins-x-release-effective.yml
+
+Showing logs for build [32mmeta-seldonio-seldon-core-maste-tcx5r-30[0m stage [32mmeta-pipeline[0m and container [32mstep-create-tekton-crds[0m
+running command: echo "skipping until 4624 is resolved..."
+skipping until 4624 is resolved...
+
+error: failed to set the version on release pipelines: failed to read file /workspace/source/VERSION
+[31m
+Pipeline failed on stage 'meta-pipeline' : container 'step-create-tekton-crds'. The execution of the pipeline has stopped.[0m
