@@ -6,6 +6,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/opentracing/opentracing-go"
@@ -19,19 +30,9 @@ import (
 	"github.com/seldonio/seldon-core/executor/api/rest"
 	loghandler "github.com/seldonio/seldon-core/executor/logger"
 	"github.com/seldonio/seldon-core/executor/proto/tensorflow/serving"
-	"github.com/seldonio/seldon-core/operator/apis/machinelearning/v1"
+	v1 "github.com/seldonio/seldon-core/operator/apis/machinelearning/v1"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
-	"io"
-	"io/ioutil"
-	"net"
-	"net/http"
-	"net/url"
-	"os"
-	"os/signal"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
-	"strings"
-	"syscall"
-	"time"
 )
 
 var (
@@ -202,8 +203,8 @@ func main() {
 		log.Fatal("Protocol must be seldon or tensorflow")
 	}
 
-	if !(*transport == "rest" || *transport == "grpc") {
-		log.Fatal("Only rest and grpc supported")
+	if !(*transport == "rest" || *transport == "grpc" || *transport == "kafka") {
+		log.Fatal("Only rest, grpc and kafka supported")
 	}
 
 	serverUrl, err := getServerUrl(*hostname, *httpPort)
@@ -252,7 +253,7 @@ func main() {
 		clientRest := rest.NewJSONRestClient(*protocol, *sdepName, predictor)
 		logger.Info("Running http server ", "port", *httpPort)
 		runHttpServer(logger, predictor, clientRest, *httpPort, false, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
-	} else {
+	} else if *transport == "grpc" {
 		logger.Info("Running http probes only server ", "port", *httpPort)
 		go runHttpServer(logger, predictor, nil, *httpPort, true, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
 		logger.Info("Running grpc server ", "port", *grpcPort)
@@ -264,6 +265,8 @@ func main() {
 		}
 		runGrpcServer(logger, predictor, clientGrpc, *grpcPort, serverUrl, *namespace, *protocol, *sdepName)
 
+	} else {
+		clientKafka = kafka.NewKafkaClient()
 	}
 
 }

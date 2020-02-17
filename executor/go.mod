@@ -3,10 +3,10 @@ module github.com/seldonio/seldon-core/executor
 go 1.12
 
 require (
+	github.com/Shopify/sarama v1.19.0
 	github.com/cloudevents/sdk-go v0.10.2
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-logr/logr v0.1.0
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
