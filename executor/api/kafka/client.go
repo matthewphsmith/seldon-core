@@ -105,18 +105,17 @@ func (smc *KafkaClient) getModelInputTopicName(method string, modelName string) 
 	return fmt.Sprintf("%s-%s-%s-input", smc.DeploymentName, modelName, method)
 }
 
-func (smc *KafkaClient) call(ctx context.Context, modelName string, method string, bytesMessage []byte, uuid string) error {
-	inputTopic := smc.getModelInputTopicName(method, modelName)
+func (smc *KafkaClient) produceMessage(ctx context.Context, topic string, bytesMessage []byte, uuid string) error {
 	message := &sarama.ProducerMessage{
-		Topic: inputTopic,
+		Topic: topic,
 		Key:   sarama.StringEncoder(uuid),
 		Value: sarama.ByteEncoder(bytesMessage),
 	}
 	partition, offset, err := smc.kafkaProducer.SendMessage(message)
-	smc.Log.Info(fmt.Sprintf("Successful message sent to partition [%d] offset [%d] with topic %s", partition, offset, inputTopic))
 	if err != nil {
 		return err
 	}
+	smc.Log.Info(fmt.Sprintf("Successful message sent to partition [%d] offset [%d] with topic %s", partition, offset, topic))
 	return nil
 }
 
@@ -127,7 +126,9 @@ func (smc *KafkaClient) Predict(ctx context.Context, modelName string, host stri
 	if payloadErr != nil {
 		log.Fatalf("Error obtaining bytes payload from message: %v", payloadErr)
 	}
-	callErr := smc.call(ctx, modelName, "predict", bytesPayload, uuid)
+	// TODO: Extend so predict is not hardcoded string
+	inputTopic := smc.getModelInputTopicName("predict", modelName)
+	callErr := smc.produceMessage(ctx, inputTopic, bytesPayload, uuid)
 	// Return an empty payload given that the Kafka client will not return payload after calling
 	return &payload.ProtoPayload{}, callErr
 }

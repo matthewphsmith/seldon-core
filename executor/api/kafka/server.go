@@ -101,15 +101,18 @@ func (r *SeldonKafkaApi) GetNextModelFromOutputTopic(outputTopic string) *v1.Pre
 	// TODO: Add functionality to support other methods other than predict and single-child
 	currModel := r.predictor.Graph
 	for {
-		if len(currModel.Children) == 0 {
-			return nil
-		}
-		// TODO: Explore support for multiple children for each graph node
-		if len(currModel.Children) > 1 {
-			log.Fatal("Streaming functionality for Seldon only supports single children nodes")
-		}
 		if currModel.Name == modelName {
+			if len(currModel.Children) == 0 {
+				// If there's no children then return nil as we'll send topic to deployment output
+				return nil
+			}
+			// Otherwise the next model is the first children
+			// TODO: Explore support for multiple children for each graph node
 			return &currModel.Children[0]
+		}
+		if len(currModel.Children) == 0 {
+			// If there are no further children and there's no match then there is an error
+			log.Fatalf("Fatal error: No model with name [%s] in Graph, from topic [%s]", modelName, outputTopic)
 		}
 		currModel = &currModel.Children[0]
 	}
@@ -125,7 +128,7 @@ func (r *SeldonKafkaApi) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sa
 		if msg.Topic == r.KafkaClient.getDeploymentInputTopicName() {
 			// Given it's the first topic we want to get the first element in the graph
 			model = r.predictor.Graph
-			newUUID := guuid.New().String()
+			newUUID := fmt.Sprintf("{\"ID\":\"%s\"}", guuid.New().String())
 			meta = map[string][]string{payload.SeldonPUIDHeader: []string{newUUID}}
 		} else {
 			model = r.GetNextModelFromOutputTopic(msg.Topic)
@@ -140,19 +143,9 @@ func (r *SeldonKafkaApi) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sa
 			bytesPayload := payload.BytesPayload{Msg: msg.Value}
 			r.KafkaClient.Predict(sess.Context(), model.Name, r.ServerUrl.Hostname(), int32(port), &bytesPayload, meta)
 		} else {
-			// TODO: Expose produceMessageToTopic function from kafkaclient instead of sending directly
-			inputTopic := r.KafkaClient.getDeploymentOutputTopicName()
-			message := &sarama.ProducerMessage{
-				Topic: inputTopic,
-				Key:   sarama.ByteEncoder(msg.Key),
-				Value: sarama.ByteEncoder(msg.Value),
-			}
-			partition, offset, err := r.KafkaClient.kafkaProducer.SendMessage(message)
-			r.Log.Info(fmt.Sprintf("Successful message sent to partition [%d] offset [%d] with topic %s", partition, offset, inputTopic))
-			if err != nil {
-				return err
-			}
-			return nil
+			// TODO: Explore how to standardise the Predict method to work for deployment output
+			topic := r.KafkaClient.getDeploymentOutputTopicName()
+			r.KafkaClient.produceMessage(sess.Context(), topic, msg.Value, string(msg.Key))
 		}
 		// Mark messasge as read
 		sess.MarkMessage(msg, "")
