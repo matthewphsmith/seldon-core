@@ -133,34 +133,45 @@ func (smc *KafkaClient) Predict(ctx context.Context, modelName string, host stri
 	return &payload.ProtoPayload{}, callErr
 }
 
+// TODO: This method would still be implemented but would not return a Seldon Payload
 func (smc *KafkaClient) Chain(ctx context.Context, modelName string, msg payload.SeldonPayload) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
 
+// TODO: Aggregation methods (combiners) would be quite hard to implement initially but there
+// are a couple of ways in which it could be implemented
 func (smc *KafkaClient) Combine(ctx context.Context, modelName string, host string, port int32, msgs []payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
 
+// TODO: Implementation of TransformInput will be trivial
 func (smc *KafkaClient) TransformInput(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
 
+// TODO: Implementation of TransformOutput will be trivial
 func (smc *KafkaClient) TransformOutput(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
 
+// TODO: Implementation of TransformInput will be trivial for the case of single route
+// 	For the case of aggregate it will require further design/thinking
 func (smc *KafkaClient) Route(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (int, error) {
 	return 0, nil
 }
 
+// TODO: Implementation of Feedback may be trivial but could require further thinking
+// 	In order to align with the REST and GRPC methods
 func (smc *KafkaClient) Feedback(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
 
+// TODO: Implementation of Feedback may be trivial, but may be best to have under REST server
 func (smc *KafkaClient) Status(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
 
+// TODO: Implementation of Metadata may be trivial, but may be best to have under REST server
 func (smc *KafkaClient) Metadata(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
 	return &payload.ProtoPayload{}, nil
 }
