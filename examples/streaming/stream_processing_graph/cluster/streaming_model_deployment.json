@@ -1,0 +1,102 @@
+{
+    "apiVersion": "machinelearning.seldon.io/v1alpha2",
+    "kind": "SeldonDeployment",
+    "metadata": {
+        "name": "streaming-deployment",
+        "creationTimestamp": null
+    },
+    "spec": {
+        "name": "streaming-spec",
+        "predictors": [
+            {
+                "name": "streaming-graph",
+                "graph": {
+                    "name": "streaming-model-one",
+                    "endpoint": {
+                        "type": "REST",
+                        "service_port": 9000
+                    },
+                    "type": "MODEL",
+                    "children": [
+                        {
+                            "name": "streaming-model-two",
+                            "endpoint": {
+                                "type": "REST",
+                                "service_port": 9000
+                            },
+                            "type": "MODEL",
+                            "children": [
+                                {
+                                    "name": "streaming-model-three",
+                                    "endpoint": {
+                                        "type": "REST",
+                                        "service_port": 9000
+                                    },
+                                    "type": "MODEL",
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "parameters": []
+                },
+                "componentSpecs": [
+                    {
+                        "spec": {
+                            "containers": [
+                                {
+                                    "image": "streaming_model:0.1",
+                                    "name": "streaming-model-one",
+                                    "env": [
+                                        {
+
+                                            "name": "PREDICTIVE_UNIT_STREAMING_BROKER",
+                                            "value": "kafka://my-kafka.default.svc.cluster.local:9092"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "image": "streaming_model:0.1",
+                                    "name": "streaming-model-two",
+                                    "env": [
+                                        {
+
+                                            "name": "PREDICTIVE_UNIT_STREAMING_BROKER",
+                                            "value": "kafka://my-kafka.default.svc.cluster.local:9092"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "image": "streaming_model:0.1",
+                                    "name": "streaming-model-three",
+                                    "env": [
+                                        {
+
+                                            "name": "PREDICTIVE_UNIT_STREAMING_BROKER",
+                                            "value": "kafka://my-kafka.default.svc.cluster.local:9092"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "terminationGracePeriodSeconds": 1
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "engineResources": {},
+                "svcOrchSpec": {},
+                "traffic": 100,
+                "explainer": {
+                    "containerSpec": {
+                        "name": "",
+                        "resources": {}
+                    }
+                }
+            }
+        ],
+        "annotations": {
+            "seldon.io/engine-seldon-log-messages-externally": "true"
+        }
+    },
+    "status": {}
+}
