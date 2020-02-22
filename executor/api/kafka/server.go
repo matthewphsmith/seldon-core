@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -10,7 +9,7 @@ import (
 
 	"github.com/Shopify/sarama"
 	"github.com/go-logr/logr"
-	"github.com/seldonio/seldon-core/executor/api/metric"
+	guuid "github.com/google/uuid"
 	"github.com/seldonio/seldon-core/executor/api/payload"
 	v1 "github.com/seldonio/seldon-core/operator/apis/machinelearning/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -19,30 +18,29 @@ import (
 type SeldonKafkaApi struct {
 	KafkaConsumerGroup sarama.ConsumerGroup
 	// TODO: Change back to client.SeldonApiClient
-	KafkaClient    KafkaClient
+	KafkaClient    *KafkaClient
 	Log            logr.Logger
-	ProbesOnly     bool
 	Protocol       string
 	DeploymentName string
 	ServerUrl      *url.URL
 	predictor      *v1.PredictorSpec
-	metrics        *metric.ServerMetrics
-	prometheusPath string
 }
 
 // TODO: Change Kafka client to client.SeldonClientAPI
-func NewServerKafkaApi(predictor *v1.PredictorSpec, client KafkaClient, probesOnly bool, serverUrl *url.URL, namespace string, protocol string, deploymentName string, prometheusPath string) *SeldonKafkaApi {
+// TODO: Add server metrics
+func NewServerKafkaApi(predictor *v1.PredictorSpec, client *KafkaClient, serverUrl *url.URL, namespace string, protocol string, deploymentName string) *SeldonKafkaApi {
 
-	var serverMetrics *metric.ServerMetrics
-	if !probesOnly {
-		serverMetrics = metric.NewServerMetrics(predictor, deploymentName)
-	}
+	logger := logf.Log.WithName("SeldonKafkaApi")
 
 	config := sarama.NewConfig()
 	config.ClientID = deploymentName
-	brokers := []string{serverUrl.String()}
+	// TODO: Allow kafka version to be configurable
+	config.Version = sarama.V2_0_0_0
+	brokers := []string{fmt.Sprintf("%s:%s", serverUrl.Hostname(), serverUrl.Port())}
 
 	groupName := fmt.Sprintf("%s-group", deploymentName)
+
+	logger.Info("Creating Kafka Consumer", "Address", brokers)
 
 	kafkaConsumerGroup, err := sarama.NewConsumerGroup(brokers, groupName, config)
 	if err != nil {
@@ -52,14 +50,11 @@ func NewServerKafkaApi(predictor *v1.PredictorSpec, client KafkaClient, probesOn
 	return &SeldonKafkaApi{
 		kafkaConsumerGroup,
 		client,
-		logf.Log.WithName("SeldonKafkaApi"),
-		probesOnly,
+		logger,
 		protocol,
 		deploymentName,
 		serverUrl,
 		predictor,
-		serverMetrics,
-		prometheusPath,
 	}
 }
 
@@ -96,11 +91,11 @@ func (r *SeldonKafkaApi) GetTopicNamesToConsume() []string {
 
 func (r *SeldonKafkaApi) GetNextModelFromOutputTopic(outputTopic string) *v1.PredictiveUnit {
 	// TODO: Make this work with other methods other than predict
-	reStr := fmt.Sprintf("%s-%s-(.*)-predict-output", r.DeploymentName, r.predictor.Name)
+	reStr := fmt.Sprintf("%s-(.*)-predict-output", r.DeploymentName)
 	re := regexp.MustCompile(reStr)
 	match := re.FindStringSubmatch(outputTopic)
 	if len(match) != 2 {
-		log.Fatalf("Error extracting model name from topic: %s", outputTopic)
+		log.Fatalf("Error extracting model name from topic [%s] deployment name [%s] predictor name [%s] - resulting match [%v]", outputTopic, r.DeploymentName, r.predictor.Name, match)
 	}
 	modelName := match[1]
 	// TODO: Add functionality to support other methods other than predict and single-child
@@ -124,22 +119,25 @@ func (r *SeldonKafkaApi) Setup(_ sarama.ConsumerGroupSession) error   { return n
 func (r *SeldonKafkaApi) Cleanup(_ sarama.ConsumerGroupSession) error { return nil }
 func (r *SeldonKafkaApi) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
-		r.Log.Info("Message topic:%q partition:%d offset:%d\n", msg.Topic, msg.Partition, msg.Offset)
+		r.Log.Info(fmt.Sprintf("Message topic:%q partition:%d offset:%d\n", msg.Topic, msg.Partition, msg.Offset))
 		var model *v1.PredictiveUnit
+		var meta map[string][]string
 		if msg.Topic == r.KafkaClient.getDeploymentInputTopicName() {
+			// Given it's the first topic we want to get the first element in the graph
 			model = r.predictor.Graph
+			newUUID := guuid.New().String()
+			meta = map[string][]string{payload.SeldonPUIDHeader: []string{newUUID}}
 		} else {
 			model = r.GetNextModelFromOutputTopic(msg.Topic)
+			meta = map[string][]string{payload.SeldonPUIDHeader: []string{string(msg.Key)}}
 		}
 
 		if model != nil {
-			// Given it's the first topic we want to get the first element in the graph
 			port, err := strconv.Atoi(r.ServerUrl.Port())
 			if err != nil {
 				log.Fatalf("Could not convert port string to int: %v", err)
 			}
 			bytesPayload := payload.BytesPayload{Msg: msg.Value}
-			meta := map[string][]string{payload.SeldonPUIDHeader: []string{string(msg.Key)}}
 			r.KafkaClient.Predict(sess.Context(), model.Name, r.ServerUrl.Hostname(), int32(port), &bytesPayload, meta)
 		} else {
 			// TODO: Expose produceMessageToTopic function from kafkaclient instead of sending directly
@@ -160,15 +158,4 @@ func (r *SeldonKafkaApi) ConsumeClaim(sess sarama.ConsumerGroupSession, claim sa
 		sess.MarkMessage(msg, "")
 	}
 	return nil
-}
-
-func runKafkaServerApi(r *SeldonKafkaApi) {
-	topics := r.GetTopicNamesToConsume()
-	ctx := context.Background()
-	for {
-		err := r.KafkaConsumerGroup.Consume(ctx, topics, r)
-		if err != nil {
-			panic(err)
-		}
-	}
 }

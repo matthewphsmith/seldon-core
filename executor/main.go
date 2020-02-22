@@ -27,6 +27,7 @@ import (
 	"github.com/seldonio/seldon-core/executor/api/grpc/seldon"
 	"github.com/seldonio/seldon-core/executor/api/grpc/seldon/proto"
 	"github.com/seldonio/seldon-core/executor/api/grpc/tensorflow"
+	"github.com/seldonio/seldon-core/executor/api/kafka"
 	"github.com/seldonio/seldon-core/executor/api/rest"
 	loghandler "github.com/seldonio/seldon-core/executor/logger"
 	"github.com/seldonio/seldon-core/executor/proto/tensorflow/serving"
@@ -95,6 +96,25 @@ func getServerUrl(hostname string, port int) (*url.URL, error) {
 	return url.Parse(fmt.Sprintf("http://%s:%d/", hostname, port))
 }
 
+// TODO: Change the client to client.SeldonApiClient
+func runKafkaServer(logger logr.Logger, predictor *v1.PredictorSpec, client *kafka.KafkaClient, serverUrl *url.URL, namespace string, protocol string, deploymentName string) {
+
+	kafkaServer := kafka.NewServerKafkaApi(predictor, client, serverUrl, namespace, protocol, deploymentName)
+
+	topics := kafkaServer.GetTopicNamesToConsume()
+
+	ctx := context.Background()
+
+	logger.Info("Connecting to Kafka Cluster", "url", fmt.Sprintf("%s:%s", serverUrl.Hostname(), serverUrl.Port()))
+	logger.Info("Listening to the following topics", "topics", strings.Join(topics, ", "))
+	for {
+		err := kafkaServer.KafkaConsumerGroup.Consume(ctx, topics, kafkaServer)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func runHttpServer(logger logr.Logger, predictor *v1.PredictorSpec, client seldonclient.SeldonApiClient, port int,
 	probesOnly bool, serverUrl *url.URL, namespace string, protocol string, deploymentName string, prometheusPath string) {
 
@@ -103,7 +123,7 @@ func runHttpServer(logger logr.Logger, predictor *v1.PredictorSpec, client seldo
 	seldonRest.Initialise()
 
 	address := fmt.Sprintf("0.0.0.0:%d", port)
-	logger.Info("Listening", "Address", address)
+	logger.Info("Creating HTTP Server", "url", address)
 
 	srv := &http.Server{
 		Handler: seldonRest.Router,
@@ -207,7 +227,7 @@ func main() {
 		log.Fatal("Only rest, grpc and kafka supported")
 	}
 
-	serverUrl, err := getServerUrl(*hostname, *httpPort)
+	serverUrl, err := getServerUrl("my-kafka.default.svc.cluster.local", 9092)
 	if err != nil {
 		log.Fatal("Failed to create server url from", *hostname, *httpPort)
 	}
@@ -249,24 +269,27 @@ func main() {
 	closer := initTracing()
 	defer closer.Close()
 
-	if *transport == "rest" {
-		clientRest := rest.NewJSONRestClient(*protocol, *sdepName, predictor)
-		logger.Info("Running http server ", "port", *httpPort)
-		runHttpServer(logger, predictor, clientRest, *httpPort, false, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
-	} else if *transport == "grpc" {
-		logger.Info("Running http probes only server ", "port", *httpPort)
-		go runHttpServer(logger, predictor, nil, *httpPort, true, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
-		logger.Info("Running grpc server ", "port", *grpcPort)
-		var clientGrpc seldonclient.SeldonApiClient
-		if *protocol == "seldon" {
-			clientGrpc = seldon.NewSeldonGrpcClient(predictor, *sdepName)
-		} else {
-			clientGrpc = tensorflow.NewTensorflowGrpcClient(predictor, *sdepName)
-		}
-		runGrpcServer(logger, predictor, clientGrpc, *grpcPort, serverUrl, *namespace, *protocol, *sdepName)
+	//if *transport == "rest" {
+	//	clientRest := rest.NewJSONRestClient(*protocol, *sdepName, predictor)
+	//	logger.Info("Running http server ", "port", *httpPort)
+	//	runHttpServer(logger, predictor, clientRest, *httpPort, false, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
+	//} else if *transport == "grpc" {
+	//	logger.Info("Running http probes only server ", "port", *httpPort)
+	//	go runHttpServer(logger, predictor, nil, *httpPort, true, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
+	//	logger.Info("Running grpc server ", "port", *grpcPort)
+	//	var clientGrpc seldonclient.SeldonApiClient
+	//	if *protocol == "seldon" {
+	//		clientGrpc = seldon.NewSeldonGrpcClient(predictor, *sdepName)
+	//	} else {
+	//		clientGrpc = tensorflow.NewTensorflowGrpcClient(predictor, *sdepName)
+	//	}
+	//	runGrpcServer(logger, predictor, clientGrpc, *grpcPort, serverUrl, *namespace, *protocol, *sdepName)
 
-	} else {
-		clientKafka = kafka.NewKafkaClient()
-	}
+	//} else {
+	clientKafka := kafka.NewKafkaClient(serverUrl, *protocol, *sdepName, predictor)
+	logger.Info("Running http probes only server ", "port", *httpPort)
+	go runHttpServer(logger, predictor, nil, *httpPort, true, serverUrl, *namespace, *protocol, *sdepName, *prometheusPath)
+	runKafkaServer(logger, predictor, clientKafka, serverUrl, *namespace, *protocol, *sdepName)
+	//}
 
 }

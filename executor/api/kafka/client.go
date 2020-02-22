@@ -6,11 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/Shopify/sarama"
 	"github.com/go-logr/logr"
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/seldonio/seldon-core/executor/api/client"
 	"github.com/seldonio/seldon-core/executor/api/grpc/seldon/proto"
 	"github.com/seldonio/seldon-core/executor/api/metric"
 	"github.com/seldonio/seldon-core/executor/api/payload"
@@ -51,21 +52,30 @@ func (smc *KafkaClient) Unmarshall(msg []byte) (payload.SeldonPayload, error) {
 
 type BytesKafkaClientOption func(client *KafkaClient)
 
-func NewKafkaClient(serverUrl string, protocol string, deploymentName string, predictor *v1.PredictorSpec, options ...BytesKafkaClientOption) client.SeldonApiClient {
+// TODO: Change the return type into client.SeldonApiClient
+func NewKafkaClient(serverUrl *url.URL, protocol string, deploymentName string, predictor *v1.PredictorSpec, options ...BytesKafkaClientOption) *KafkaClient {
+
+	logger := logf.Log.WithName("KafkaClient")
+	// TODO: Add sarama logger to the Kafka Client logger to provide more details on info
+	// sarama.Logger = log.New(os.Stdout, "[sarama] ", log.LstdFlags)
 
 	kafkaConfig := sarama.NewConfig()
 	kafkaConfig.Producer.Retry.Max = 5
+	kafkaConfig.ClientID = deploymentName
 	kafkaConfig.Producer.RequiredAcks = sarama.WaitForAll
 	kafkaConfig.Producer.Return.Successes = true
 
-	producer, err := sarama.NewSyncProducer([]string{serverUrl}, kafkaConfig)
+	brokers := []string{fmt.Sprintf("%s:%s", serverUrl.Hostname(), serverUrl.Port())}
+
+	logger.Info("Creating Kafka Producer", "url", strings.Join(brokers, ", "))
+	producer, err := sarama.NewSyncProducer(brokers, kafkaConfig)
 	if err != nil {
-		log.Fatalf("Failed to connect to Kafka address: %v", err)
+		log.Fatalf("Failed to connect to Kafka address [%s] with error [%v]", brokers, err)
 	}
 
 	client := KafkaClient{
 		producer,
-		logf.Log.WithName("KafkaClient"),
+		logger,
 		protocol,
 		deploymentName,
 		predictor,
@@ -88,11 +98,11 @@ func (smc *KafkaClient) getDeploymentInputTopicName() string {
 }
 
 func (smc *KafkaClient) getModelOutputTopicName(method string, modelName string) string {
-	return fmt.Sprintf("%s-%s-%s-%s-input", smc.DeploymentName, smc.predictor.Name, modelName, method)
+	return fmt.Sprintf("%s-%s-%s-output", smc.DeploymentName, modelName, method)
 }
 
 func (smc *KafkaClient) getModelInputTopicName(method string, modelName string) string {
-	return fmt.Sprintf("%s-%s-%s-%s-input", smc.DeploymentName, smc.predictor.Name, modelName, method)
+	return fmt.Sprintf("%s-%s-%s-input", smc.DeploymentName, modelName, method)
 }
 
 func (smc *KafkaClient) call(ctx context.Context, modelName string, method string, bytesMessage []byte, uuid string) error {
