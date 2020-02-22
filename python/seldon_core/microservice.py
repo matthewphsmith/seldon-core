@@ -378,6 +378,8 @@ def main():
                 log_level=args.log_level,
                 tracing=interceptor,
                 broker=broker,
+                # TODO: Find a scalable way to set web bind port
+                web_bind_port=port + 1000,
             )
 
             try:

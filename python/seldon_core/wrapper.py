@@ -25,6 +25,7 @@ def get_kafka_worker(
     tracing=None,
     broker="kafka://kafka:9092",
     topic_partitions=1,
+    web_bind_port=10000,
 ):
 
     if not all([bool(PRED_UNIT_ID), bool(DEPLOYMENT_ID)]):
@@ -46,6 +47,7 @@ def get_kafka_worker(
         value_serializer="json",
         topic_partitions=topic_partitions,
         tracing=tracing,
+        web_port=web_bind_port,
     )
 
     # At this point only the predict function is available for streaming
