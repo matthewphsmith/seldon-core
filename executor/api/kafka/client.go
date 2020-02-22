@@ -1,16 +1,21 @@
 package kafka
 
 import (
+	"context"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/Shopify/sarama"
 	"github.com/go-logr/logr"
 	"github.com/golang/protobuf/jsonpb"
+	"github.com/seldonio/seldon-core/executor/api/client"
 	"github.com/seldonio/seldon-core/executor/api/grpc/seldon/proto"
 	"github.com/seldonio/seldon-core/executor/api/metric"
 	"github.com/seldonio/seldon-core/executor/api/payload"
 	v1 "github.com/seldonio/seldon-core/operator/apis/machinelearning/v1"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
 const (
@@ -18,9 +23,9 @@ const (
 )
 
 type KafkaClient struct {
-	kafkaClient    sarama.AsyncProducer
+	kafkaProducer  sarama.SyncProducer
 	Log            logr.Logger
-	Protocol	   string
+	Protocol       string
 	DeploymentName string
 	predictor      *v1.PredictorSpec
 	metrics        *metric.ClientMetrics
@@ -44,16 +49,16 @@ func (smc *KafkaClient) Unmarshall(msg []byte) (payload.SeldonPayload, error) {
 	return &reqPayload, nil
 }
 
-func BytesKafkaClientOption func(client *KafkaClient)
+type BytesKafkaClientOption func(client *KafkaClient)
 
-func NewKafkaClient(hostname string, port int, protocol string, deployName string, predictor *v1.PredictorSpec, options ...BytesKafkaClientOption) client.SeldonApiClient {
+func NewKafkaClient(serverUrl string, protocol string, deploymentName string, predictor *v1.PredictorSpec, options ...BytesKafkaClientOption) client.SeldonApiClient {
 
 	kafkaConfig := sarama.NewConfig()
-	config.Producer.Retry.Max = 5
-	config.Producer.RequiredAcks = sarama.WaitForAllAll
-	config.Producer.Return.Successes = true
+	kafkaConfig.Producer.Retry.Max = 5
+	kafkaConfig.Producer.RequiredAcks = sarama.WaitForAll
+	kafkaConfig.Producer.Return.Successes = true
 
-	producer, err := sarama.NewAsyncProducer([]string{fmt.Sprintf("%s:%d", hostname, port), config)
+	producer, err := sarama.NewSyncProducer([]string{serverUrl}, kafkaConfig)
 	if err != nil {
 		log.Fatalf("Failed to connect to Kafka address: %v", err)
 	}
@@ -74,24 +79,77 @@ func NewKafkaClient(hostname string, port int, protocol string, deployName strin
 	return &client
 }
 
-func (smc *KafkaClient) getInputTopicName(method string, modelName string) string {
-	return fmt.Sprintf("%s-%s-%s-%s-input", smc.DeploymentName, smc.Predictor.Name, modelName, method)
+func (smc *KafkaClient) getDeploymentOutputTopicName() string {
+	return fmt.Sprintf("%s-output", smc.DeploymentName)
 }
 
-func (smc *KafkaClient) call(ctx context.Context, modelName string, method string, msg []byte, uuid string) error {
-	inputTopic := smc.getInputTopicName(method, modelName)
-	msg := &smc.kafkaClient.ProducerMessage {
+func (smc *KafkaClient) getDeploymentInputTopicName() string {
+	return fmt.Sprintf("%s-input", smc.DeploymentName)
+}
+
+func (smc *KafkaClient) getModelOutputTopicName(method string, modelName string) string {
+	return fmt.Sprintf("%s-%s-%s-%s-input", smc.DeploymentName, smc.predictor.Name, modelName, method)
+}
+
+func (smc *KafkaClient) getModelInputTopicName(method string, modelName string) string {
+	return fmt.Sprintf("%s-%s-%s-%s-input", smc.DeploymentName, smc.predictor.Name, modelName, method)
+}
+
+func (smc *KafkaClient) call(ctx context.Context, modelName string, method string, bytesMessage []byte, uuid string) error {
+	inputTopic := smc.getModelInputTopicName(method, modelName)
+	message := &sarama.ProducerMessage{
 		Topic: inputTopic,
-		Key: uuid,
-		Value: msg,
+		Key:   sarama.StringEncoder(uuid),
+		Value: sarama.ByteEncoder(bytesMessage),
 	}
-	partition, offset, err := smc.kafkaClient.SendMessage(msg)
+	partition, offset, err := smc.kafkaProducer.SendMessage(message)
+	smc.Log.Info(fmt.Sprintf("Successful message sent to partition [%d] offset [%d] with topic %s", partition, offset, inputTopic))
 	if err != nil {
 		return err
 	}
+	return nil
 }
 
 func (smc *KafkaClient) Predict(ctx context.Context, modelName string, host string, port int32, req payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
-	// Change client.path const values to not have prefix / 
-	return payload.SeldonPayload{}, smc.call(ctx, modelName, "predict", req.GetPayload(), meta[payload.SeldonPUIDHeader])
+	// Change client.path const values to not have prefix /
+	uuid := meta[payload.SeldonPUIDHeader][0]
+	bytesPayload, payloadErr := req.GetBytes()
+	if payloadErr != nil {
+		log.Fatalf("Error obtaining bytes payload from message: %v", payloadErr)
+	}
+	callErr := smc.call(ctx, modelName, "predict", bytesPayload, uuid)
+	// Return an empty payload given that the Kafka client will not return payload after calling
+	return &payload.ProtoPayload{}, callErr
+}
+
+func (smc *KafkaClient) Chain(ctx context.Context, modelName string, msg payload.SeldonPayload) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
+}
+
+func (smc *KafkaClient) Combine(ctx context.Context, modelName string, host string, port int32, msgs []payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
+}
+
+func (smc *KafkaClient) TransformInput(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
+}
+
+func (smc *KafkaClient) TransformOutput(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
+}
+
+func (smc *KafkaClient) Route(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (int, error) {
+	return 0, nil
+}
+
+func (smc *KafkaClient) Feedback(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
+}
+
+func (smc *KafkaClient) Status(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
+}
+
+func (smc *KafkaClient) Metadata(ctx context.Context, modelName string, host string, port int32, msg payload.SeldonPayload, meta map[string][]string) (payload.SeldonPayload, error) {
+	return &payload.ProtoPayload{}, nil
 }
