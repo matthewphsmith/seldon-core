@@ -227,6 +227,7 @@ func main() {
 		log.Fatal("Only rest, grpc and kafka supported")
 	}
 
+	// TODO: Add an extra environment variable specifically for kafkaServerUrl
 	serverUrl, err := getServerUrl("my-kafka.default.svc.cluster.local", 9092)
 	if err != nil {
 		log.Fatal("Failed to create server url from", *hostname, *httpPort)
