@@ -44,6 +44,22 @@ The specification is:
  * url: Any url. Optional. If not provided then it will default to the default knative borker in the namespace of the Seldon Deployment.
  * mode: Either `request`, `response` or `all`
 
+## Global Request Logger Options
+
+In order to avoid having to configure the request logger url every time, you can set a default URL that will apply to all your deployments. This can be done through the helm chart variable:
+
+`values.yaml`:
+```yaml
+...
+executor:
+  defaultRequestLoggerEndpointPrefix: 'http://default-broker.'
+...
+```
+
+The custom prefix provided in this case will always be suffixed by the namespace in which the deployment runs.
+
+It can still be overriden through the SeldonDeployment values, when provided as part of the deployment file, as these will take precedence.
+
 ## Example Notebook
 
 You can try out an [example notebook with logging](../examples/payload_logging.html)
