@@ -1,0 +1,4 @@
+tfidf_vectorizer.model
+data 
+lr.model
+__pycache__
