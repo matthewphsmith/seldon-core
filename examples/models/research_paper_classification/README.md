@@ -6,13 +6,13 @@ We believe the most powerful insights can be brought through cross-functional co
 
 More importantly, once powerful predictive and explanatory models are built, it is especially important to be able to enable access to these models at scale.
 
-In this small tutorial we will show how you can deploy your machine learning solutions at scale, and we will use a practical example with an on-going Kaggle dataset released by the Allen Institute for AI containing over 44,000 scholarly articles.
+In this small tutorial we will show how you can deploy your machine learning solutions at scale, and we will use a practical example with an on-going Kaggle dataset released by the Allen Institute for AI containing over 44,000 scholarly articles on COVID-19.
 
 In this tutorial we will deploy a COVID-19 research paper classifier using Seldon Core, which will allow us to convert this ML model into a fully fledged microservice, which we'll be able to send REST / GRPC requests, as well as monitor through grafana / ELK integration.
 
 ## Tutorial Overview
 
-In this tutorial we will showcase an end-to-end workflow, where we will be training a model from scratch. For this we will use a small version of the COVID
+In this tutorial we will showcase an end-to-end workflow that will ultimately show how to deploy a machine learning model - in this case we will be building a classifier that identifies whether a research paper is related to covid-19.
 
 The steps in this tutorial include:
 
