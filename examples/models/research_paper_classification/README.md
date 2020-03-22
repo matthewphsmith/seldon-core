@@ -52,6 +52,7 @@ scikit-learn>=0.18
 spacy==2.0.18
 dill==0.2.9
 xai==0.0.5
+alibi==0.4.0
 ```
 
     Writing requirements-dev.txt
@@ -279,10 +280,15 @@ lr.fit(x_train_tfidf, y_train)
 
 
 ```python
-pred = lr.predict(tfidf_vectorizer.transform(spacy_tokenizer.transform(clean_text_transformer.transform(x_test))))
+def predict_fn(x):
+    x_c = clean_text_transformer.transform(x)
+    x_s = spacy_tokenizer.transform(x_c)
+    x_t = tfidf_vectorizer.transform(x_s)
+    return lr.predict(x_t)
+pred = predict_fn(x_test)
 ```
 
-    /home/alejandro/miniconda3/lib/python3.7/site-packages/ipykernel_launcher.py:29: DeprecationWarning: The unescape method is deprecated and will be removed in 3.5, use html.unescape() instead.
+    The unescape method is deprecated and will be removed in 3.5, use html.unescape() instead.
 
 
 
@@ -704,3 +710,91 @@ print(client_prediction)
     }
     
 
+
+# Explaining your model
+
+We will now use the Alibi library to explain predictions from the model we've built
+
+
+```python
+import alibi
+from ml_utils import nlp
+```
+
+
+```python
+def predict_fn(x):
+    x_c = clean_text_transformer.transform(x)
+    x_s = spacy_tokenizer.transform(x_c)
+    x_t = tfidf_vectorizer.transform(x_s)
+    return lr.predict(x_t)
+```
+
+
+```python
+explainer = alibi.explainers.AnchorText(nlp, predict_fn)
+```
+
+    The unescape method is deprecated and will be removed in 3.5, use html.unescape() instead.
+
+
+
+```python
+x_explain = x_test[1]
+x_explain
+```
+
+
+
+
+    'Abstract The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data.'
+
+
+
+
+```python
+explanation = explainer.explain(x_explain, threshold=0.95, use_unk=True)
+```
+
+    The unescape method is deprecated and will be removed in 3.5, use html.unescape() instead.
+
+
+
+```python
+print('Anchor: %s' % (' AND '.join(explanation.anchor)))
+print('Precision: %.2f' % explanation.precision)
+print('\nExamples where anchor applies and model predicts %s:' % y_test[1])
+print('\n'.join([x for x in explanation.raw['examples'][-1]['covered_true']]))
+print('\nExamples where anchor applies and model does NOT predict %s' % y_test[1])
+print('\n'.join([x for x in explanation.raw['examples'][-1]['covered_false']]))
+```
+
+    Anchor: The AND a
+    Precision: 0.97
+    
+    Examples where anchor applies and model predicts 1:
+    Abstract UNK UNK UNK unit UNK UNK MAUP UNK UNK UNK - UNK UNK UNK UNK appreciated . Through real examples , UNK UNK outlines UNK basic causes UNK UNK UNK UNK changes UNK the size UNK shape UNK and/or UNK of spatial categories UNK UNK UNK to map areal UNK . The UNK UNK of changes UNK UNK data are obvious UNK though the impacts UNK our understanding of UNK world UNK UNK . The UNK concludes UNK a discussion UNK technical and broader UNK UNK UNK confronting UNK effects of UNK UNK our treatment UNK interpretation UNK areal data UNK
+    UNK The modifiable areal unit UNK , MAUP , is ever - present although not always appreciated . Through real examples UNK this UNK UNK the UNK UNK of UNK UNK UNK UNK in the size , UNK , UNK orientation UNK spatial UNK UNK polygons used to UNK UNK data . The UNK UNK UNK UNK UNK UNK UNK are UNK even though the UNK UNK our understanding of UNK world are profound . UNK article concludes UNK a discussion of UNK UNK broader UNK UNK for UNK UNK UNK of UNK UNK UNK UNK and interpretation of areal UNK UNK
+    UNK The UNK UNK unit problem UNK MAUP , UNK ever - UNK although not UNK UNK UNK UNK UNK examples UNK this article outlines the UNK causes UNK MAUP , UNK changes in UNK UNK , UNK , and/or orientation UNK UNK UNK UNK polygons UNK UNK UNK areal UNK UNK The visual effects UNK changes to UNK data are UNK even though UNK UNK UNK UNK understanding UNK UNK world UNK UNK . The UNK UNK with a UNK of UNK and broader strategic approaches for UNK the effects UNK UNK on our treatment UNK interpretation UNK areal UNK UNK
+    UNK UNK UNK UNK unit UNK UNK UNK UNK is UNK UNK present although UNK always appreciated UNK Through real UNK UNK UNK UNK outlines the UNK causes of MAUP UNK UNK changes UNK the size , shape , UNK UNK of UNK categories / polygons UNK to UNK UNK data . The UNK UNK UNK changes UNK mapped data UNK UNK even though UNK UNK on UNK understanding UNK UNK world UNK profound UNK UNK article UNK with a UNK UNK UNK and broader strategic UNK for confronting the effects UNK MAUP on our treatment UNK interpretation of UNK UNK UNK
+    UNK The modifiable UNK unit problem , MAUP , UNK UNK - UNK UNK UNK always appreciated . Through UNK examples UNK this UNK UNK the basic causes UNK UNK , UNK UNK UNK the UNK , shape UNK UNK orientation of UNK UNK UNK polygons used to map areal UNK . The visual UNK UNK UNK to UNK data UNK UNK UNK though UNK impacts on UNK UNK of the world UNK profound UNK The article concludes UNK a UNK UNK technical and broader strategic UNK for confronting the effects of MAUP UNK UNK UNK and interpretation UNK UNK UNK .
+    UNK The UNK areal unit UNK UNK UNK , is ever UNK UNK although not UNK UNK . Through real examples UNK UNK UNK outlines UNK UNK causes of UNK , UNK UNK UNK UNK size , UNK UNK UNK UNK UNK UNK categories UNK polygons used to UNK UNK data UNK The visual UNK of UNK to mapped data UNK obvious UNK though UNK impacts UNK our understanding UNK the UNK UNK profound . The article concludes UNK a discussion UNK technical UNK broader strategic UNK for confronting UNK UNK of MAUP on our treatment and UNK of UNK UNK UNK
+    UNK The modifiable areal UNK UNK , MAUP , is ever UNK present UNK UNK UNK appreciated UNK UNK UNK UNK , UNK UNK outlines UNK UNK causes of MAUP UNK namely UNK in UNK UNK , shape , UNK orientation UNK UNK UNK / UNK UNK to map areal UNK UNK The visual UNK of UNK to mapped UNK UNK UNK even though UNK UNK on UNK UNK UNK UNK UNK are profound UNK UNK UNK concludes with a discussion of UNK UNK UNK UNK approaches for UNK UNK UNK UNK MAUP on UNK UNK and interpretation UNK UNK data .
+    Abstract The modifiable areal unit UNK , UNK , is ever - present although UNK UNK appreciated UNK Through real examples , this UNK UNK the UNK causes UNK UNK , namely changes UNK UNK size , UNK , UNK orientation of spatial UNK / polygons UNK UNK map UNK UNK UNK The visual UNK of UNK to UNK UNK UNK UNK even UNK UNK impacts on our UNK UNK UNK world are UNK UNK The UNK UNK with a UNK UNK technical UNK UNK UNK approaches for UNK the UNK of UNK on UNK UNK UNK UNK of areal data UNK
+    UNK UNK UNK UNK unit UNK UNK UNK , UNK ever UNK present although UNK UNK appreciated UNK Through real examples , UNK UNK UNK the UNK causes UNK MAUP , UNK UNK UNK UNK UNK , UNK UNK and/or UNK of spatial UNK / UNK used to map UNK data . The UNK UNK of changes UNK mapped UNK are UNK UNK UNK UNK impacts on UNK understanding of UNK UNK UNK profound UNK UNK UNK UNK UNK a UNK UNK UNK and broader strategic UNK for UNK the UNK UNK MAUP UNK UNK UNK UNK interpretation of areal data .
+    Abstract The modifiable UNK UNK problem UNK MAUP UNK is UNK - UNK although UNK UNK UNK UNK Through UNK UNK , UNK UNK outlines UNK UNK causes UNK MAUP , UNK changes UNK the UNK , UNK , and/or UNK UNK spatial categories / polygons used to UNK UNK UNK . The UNK effects of changes to UNK UNK are UNK UNK UNK the impacts UNK our UNK of UNK world UNK UNK UNK The article UNK UNK a UNK UNK UNK UNK broader strategic UNK UNK UNK UNK UNK of MAUP on our treatment and interpretation UNK UNK data UNK
+    
+    Examples where anchor applies and model does NOT predict 1
+    Abstract The UNK UNK unit problem , MAUP UNK UNK ever - present UNK UNK always appreciated . Through UNK examples UNK this article UNK UNK basic causes of MAUP UNK namely changes UNK the UNK UNK shape UNK and/or UNK of spatial categories / UNK UNK to UNK UNK data . The UNK effects UNK changes to UNK UNK UNK obvious UNK though UNK impacts UNK our understanding of UNK world are UNK . UNK article UNK UNK a UNK UNK UNK and UNK UNK approaches UNK UNK UNK UNK UNK MAUP UNK UNK UNK UNK UNK UNK areal data .
+    Abstract The modifiable areal UNK UNK , UNK , UNK ever - UNK although not always UNK UNK Through UNK UNK , UNK article UNK UNK basic causes of UNK UNK namely changes UNK the size , shape , UNK UNK of spatial UNK UNK polygons UNK to UNK UNK UNK UNK The visual effects of UNK UNK mapped UNK are UNK even UNK UNK UNK UNK our understanding of UNK UNK UNK profound UNK UNK article concludes with a UNK UNK UNK UNK broader strategic UNK for confronting the effects of MAUP on our UNK and UNK of UNK UNK .
+    Abstract UNK UNK UNK UNK UNK , UNK UNK UNK ever UNK UNK UNK UNK always appreciated . Through real examples , this article outlines the UNK causes UNK UNK UNK UNK UNK in UNK size , shape UNK and/or orientation of spatial categories UNK UNK used UNK UNK UNK UNK UNK The UNK UNK UNK UNK to mapped UNK are obvious even UNK UNK impacts UNK UNK UNK UNK UNK world are UNK . UNK article UNK UNK a discussion UNK technical and UNK strategic UNK UNK UNK the UNK of UNK UNK our treatment and UNK UNK areal data UNK
+    UNK The modifiable UNK unit UNK UNK MAUP UNK is ever UNK UNK UNK UNK always appreciated . Through UNK examples UNK UNK article UNK UNK basic causes of UNK , namely UNK in UNK UNK , shape , and/or orientation UNK UNK UNK / polygons used to UNK areal UNK UNK The visual effects of changes to UNK UNK are obvious UNK though UNK impacts UNK our UNK of the UNK UNK UNK UNK The article UNK UNK a discussion UNK technical and broader strategic UNK UNK UNK UNK effects of MAUP UNK our treatment and UNK of UNK data .
+    Abstract The UNK areal UNK UNK , MAUP , is ever UNK present UNK UNK UNK appreciated UNK Through UNK examples UNK this article UNK UNK UNK causes UNK MAUP , UNK changes UNK UNK size UNK UNK , UNK orientation UNK spatial categories / UNK used to UNK areal UNK . The UNK UNK of UNK to mapped data UNK obvious UNK UNK the impacts UNK UNK understanding UNK the UNK UNK profound . UNK article concludes UNK a UNK of technical UNK UNK UNK UNK for confronting UNK effects of UNK UNK our treatment and UNK of areal UNK UNK
+    Abstract UNK modifiable UNK unit UNK UNK MAUP UNK UNK UNK - UNK although not always appreciated . Through UNK UNK UNK UNK article UNK UNK basic causes UNK MAUP UNK namely changes UNK the UNK , shape , UNK orientation of spatial categories / polygons used UNK UNK UNK data UNK The visual UNK of changes UNK UNK data are obvious even though UNK UNK on our understanding of the world are UNK . UNK article concludes with a discussion UNK UNK UNK broader strategic approaches for confronting UNK effects of UNK UNK UNK UNK and UNK of UNK UNK .
+    Abstract The UNK UNK UNK UNK UNK MAUP , is ever UNK present although not always appreciated UNK UNK UNK examples UNK this article UNK UNK basic causes of UNK , namely UNK in UNK UNK , UNK UNK and/or UNK of UNK UNK / UNK used to UNK UNK UNK UNK The visual effects UNK changes UNK UNK data UNK obvious even though the impacts on our understanding of the world are UNK . The UNK UNK with a discussion UNK UNK and broader UNK UNK UNK confronting the effects of MAUP on UNK UNK and interpretation UNK areal data .
+
+
+
+```python
+
+```
