@@ -16,33 +16,29 @@ In this tutorial we will showcase an end-to-end workflow that will ultimately sh
 
 The steps in this tutorial include:
 
-1) Train and build your NLP model
+1) Train and build your NLP model with SKLearn and SpaCy
 
-2) Build your containerized model
+2) Explain your model predictions using Alibi Explain
 
-3) Test your model as a docker container
+3) Containerize your model using Seldon Core Language Wrappers and deploy to Kubernetes
 
-4) Run Seldon in your kubernetes cluster
+5) Test your deployed model by sending requests
 
-5) Deploy your model with Seldon
+6) Deploy our standard Alibi TextExplainer 
 
-6) Interact with your model through API
-
-7) Clean your environment
-
+7) Test your deployed explainer by sending requests
 
 ### Before you start
 Make sure you install the following dependencies, as they are critical for this example to work:
 
-* Helm v3.0.0+
-* A Kubernetes cluster running v1.13 or above (minkube / docker-for-windows work well if enough RAM)
-* kubectl v1.14+
-* Python 3.6+
-* Python DEV requirements (we'll install them below)
+* Seldon Core v1.1+ installed with Istio Ingress Enabled ([Documentation Instructions](https://docs.seldon.io/projects/seldon-core/en/latest/workflow/install.html#ingress-support))
+* All dependencies specified in the Seldon Core page
 
 Let's get started! 🚀🔥
 
-## 1) Train and build your NLP model
+## 0) Prepare your environment
+
+First we want to install all the dependencies. For this let's create a requirements-dev.txt file with everything we'll need:
 
 
 ```python
@@ -58,11 +54,15 @@ alibi==0.4.0
     Writing requirements-dev.txt
 
 
+And then let's install all of our dependencies locally so we can train and test our model
+
 
 ```python
 # Let's first install any dependencies
 !pip install -r requirements-dev.txt
 ```
+
+Now that everything is installed, we can import all our dependencies
 
 
 ```python
@@ -90,34 +90,18 @@ from ml_utils import CleanTextTransformer, SpacyTokenTransformer
     
 
 
+## 1) Train and build your NLP model with SKLearn and SpaCy
 
-```python
-arxiv_df = pd.read_csv("./data/arxiv-abstracts-2k.txt", names=["abstract", "is_covid"], delimiter= '\$\$\$')
-arxiv_df.is_covid = [0]*2000
-covid_df = pd.read_csv("./data/cord_19_2k.txt", names=["abstract", "is_covid"], delimiter= '\$\$\$')
-covid_df.is_covid = [1]*2000
-```
+We can now get started with the training of our model. 
 
-    /home/alejandro/miniconda3/lib/python3.7/site-packages/ipykernel_launcher.py:1: ParserWarning: Falling back to the 'python' engine because the 'c' engine does not support regex separators (separators > 1 char and different from '\s+' are interpreted as regex); you can avoid this warning by specifying engine='python'.
-      """Entry point for launching an IPython kernel.
-    /home/alejandro/miniconda3/lib/python3.7/site-packages/ipykernel_launcher.py:3: ParserWarning: Falling back to the 'python' engine because the 'c' engine does not support regex separators (separators > 1 char and different from '\s+' are interpreted as regex); you can avoid this warning by specifying engine='python'.
-      This is separate from the ipykernel package so we can avoid doing imports until
-
-
-
-```python
-df = arxiv_df.append(covid_df)
-```
-
-
-```python
-df.to_csv("./data/research_paper_abstracts.csv", index=False)
-```
+For this we will want to load the simplified dataset that we have created for this example:
 
 
 ```python
 df = pd.read_csv("./data/research_paper_abstracts.csv")
 ```
+
+This dataset contains 4000 abstracts randomly picked from the datasets mentioned in the introduction, 2000 COVID-19 related and 2000 nonCOVID19 related
 
 
 ```python
@@ -181,6 +165,8 @@ df.tail()
 
 
 
+We can see that we have a distributed set of examples to train and test our model
+
 
 ```python
 # Let's see how many examples we have of each class
@@ -195,8 +181,12 @@ df["is_covid"].value_counts().plot.bar()
 
 
 
-![png](README_files/README_9_1.png)
+![png](README_files/README_12_1.png)
 
+
+### Split our train test dataset
+
+We first start by splitting our train and test dataset, making sure we have an even breakdown of examples for train test
 
 
 ```python
@@ -209,6 +199,9 @@ x_train, x_test, y_train, y_test = train_test_split(
     test_size=0.1, shuffle=True)
 ```
 
+### Train our model: Clean Text
+As the first step for our model we'll first clean the incoming text data for any less meaningful characters and symbols
+
 
 ```python
 # Clean the text
@@ -216,12 +209,19 @@ clean_text_transformer = CleanTextTransformer()
 x_train_clean = clean_text_transformer.transform(x_train)
 ```
 
+### Train our model: Tokenize
+We now convert our input text into tokens - for this we use the SpaCy module.
+
 
 ```python
 # Tokenize the text and get the lemmas
 spacy_tokenizer = SpacyTokenTransformer()
 x_train_tokenized = spacy_tokenizer.transform(x_train_clean)
 ```
+
+### Train our model: Vectorize
+
+Now we have to convert our tokens into input our model can read, so we convert our tokens into vector using our TFIDF vectorizer.
 
 
 ```python
@@ -258,6 +258,10 @@ x_train_tfidf = tfidf_vectorizer.transform(
     x_train_tokenized)
 ```
 
+### Train your model: Prediction
+
+Finally we want to be able to predict using our model. For this, we'll use a logistic regression classifier:
+
 
 ```python
 # Train logistic regression classifier
@@ -275,6 +279,12 @@ lr.fit(x_train_tfidf, y_train)
 
 
 
+### Test your model
+
+Now that we've trained our model we can test its performance against our test dataset. 
+
+FOr this we first extract the predictions for all our test dataset
+
 
 ```python
 def predict_fn(x):
@@ -284,6 +294,8 @@ def predict_fn(x):
     return lr.predict(x_t)
 pred = predict_fn(x_test)
 ```
+
+And now we can see the performance of the predictions, which as we can see is quite satisfactory
 
 
 ```python
@@ -346,12 +358,72 @@ xai.metrics_plot(y_test, pred)
 
 
 
-![png](README_files/README_17_1.png)
+![png](README_files/README_27_1.png)
 
 
-## 2) Build your containerized model
+## 2) Explain your model predictions using Alibi Explain
+
+We will now use the Alibi library to explain predictions from the model we've built
+
+
+```python
+# Import the Spacy NLP module for our explainer
+from ml_utils import nlp
+```
+
+
+```python
+explainer = alibi.explainers.AnchorText(nlp, predict_fn)
+```
+
+
+```python
+x_explain = x_test[1]
+x_explain
+```
+
+
+
+
+    'The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data.'
+
+
+
+
+```python
+explanation = explainer.explain(x_explain, threshold=0.95, use_unk=True)
+```
+
+
+```python
+print('Anchor: %s' % (' AND '.join(explanation.anchor)))
+print('Precision: %.2f' % explanation.precision)
+print(f"\nOriginal Sample:\n{x_explain}")
+print('\nFirst Example where anchor applies and model predicts is_covid==True')
+print(f"\n{explanation.raw['examples'][-1]['covered_true'][0]}".replace("UNK", "___"))
+print('\n\nExample where anchor applies and model predicts is_covid==False')
+print(f"\n{explanation.raw['examples'][-1]['covered_false'][0]}".replace("UNK", "___"))
+```
+
+    Anchor: the
+    Precision: 0.98
+    
+    Original Sample:
+    The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data.
+    
+    First Example where anchor applies and model predicts is_covid==True
+    
+    The modifiable ___ unit problem , MAUP ___ ___ ever - ___ ___ not always ___ . ___ ___ ___ , this ___ ___ the basic ___ of ___ , ___ ___ in the ___ ___ ___ ___ and/or ___ of spatial categories ___ polygons ___ ___ map ___ data ___ The visual effects of ___ ___ mapped ___ are ___ ___ though the impacts on ___ understanding ___ ___ world ___ profound . ___ article concludes with ___ ___ ___ technical and broader strategic ___ ___ ___ the ___ ___ ___ on our ___ and ___ of areal ___ ___
+    
+    
+    Example where anchor applies and model predicts is_covid==False
+    
+    ___ modifiable ___ ___ problem ___ MAUP , is ___ ___ present although not ___ ___ ___ ___ ___ ___ , ___ article outlines the basic causes of MAUP , ___ changes ___ the size ___ ___ , and/or orientation ___ spatial categories ___ polygons used ___ ___ areal ___ ___ The ___ ___ of changes to ___ ___ ___ ___ even though ___ ___ ___ ___ understanding of ___ world are profound . ___ article concludes with a ___ ___ technical and broader ___ approaches ___ confronting the effects ___ MAUP ___ ___ treatment ___ ___ of areal ___ ___
+
 
 First we need to export the trained models
+
+## 2) Build your containerized model
 
 
 ```python
@@ -703,75 +775,6 @@ print(client_prediction)
       }
     }
     
-
-
-# Explaining your model
-
-We will now use the Alibi library to explain predictions from the model we've built
-
-
-```python
-import alibi
-from ml_utils import nlp
-```
-
-
-```python
-def predict_fn(x):
-    x_c = clean_text_transformer.transform(x)
-    x_s = spacy_tokenizer.transform(x_c)
-    x_t = tfidf_vectorizer.transform(x_s)
-    return lr.predict(x_t)
-```
-
-
-```python
-explainer = alibi.explainers.AnchorText(nlp, predict_fn)
-```
-
-
-```python
-x_explain = x_test[1]
-x_explain
-```
-
-
-
-
-    'The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data.'
-
-
-
-
-```python
-explanation = explainer.explain(x_explain, threshold=0.95, use_unk=True)
-```
-
-
-```python
-print('Anchor: %s' % (' AND '.join(explanation.anchor)))
-print('Precision: %.2f' % explanation.precision)
-print(f"\nOriginal Sample:\n{x_explain}")
-print('\nFirst Example where anchor applies and model predicts is_covid==True')
-print(f"\n{explanation.raw['examples'][-1]['covered_true'][0]}".replace("UNK", "___"))
-print('\n\nExample where anchor applies and model predicts is_covid==False')
-print(f"\n{explanation.raw['examples'][-1]['covered_false'][0]}".replace("UNK", "___"))
-```
-
-    Anchor: the
-    Precision: 0.98
-    
-    Original Sample:
-    The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data.
-    
-    First Example where anchor applies and model predicts is_covid==True
-    
-    The modifiable ___ unit problem , MAUP ___ ___ ever - ___ ___ not always ___ . ___ ___ ___ , this ___ ___ the basic ___ of ___ , ___ ___ in the ___ ___ ___ ___ and/or ___ of spatial categories ___ polygons ___ ___ map ___ data ___ The visual effects of ___ ___ mapped ___ are ___ ___ though the impacts on ___ understanding ___ ___ world ___ profound . ___ article concludes with ___ ___ ___ technical and broader strategic ___ ___ ___ the ___ ___ ___ on our ___ and ___ of areal ___ ___
-    
-    
-    Example where anchor applies and model predicts is_covid==False
-    
-    ___ modifiable ___ ___ problem ___ MAUP , is ___ ___ present although not ___ ___ ___ ___ ___ ___ , ___ article outlines the basic causes of MAUP , ___ changes ___ the size ___ ___ , and/or orientation ___ spatial categories ___ polygons used ___ ___ areal ___ ___ The ___ ___ of changes to ___ ___ ___ ___ even though ___ ___ ___ ___ understanding of ___ world are profound . ___ article concludes with a ___ ___ technical and broader ___ approaches ___ confronting the effects ___ MAUP ___ ___ treatment ___ ___ of areal ___ ___
 
 
 
