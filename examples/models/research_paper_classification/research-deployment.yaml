@@ -4,7 +4,6 @@ kind: SeldonDeployment
 metadata:
   name: research-deployment
 spec:
-  name: research-spec
   predictors:
   - componentSpecs:
     - spec:

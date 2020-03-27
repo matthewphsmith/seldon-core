@@ -1,4 +1,4 @@
-# Research Paper Classification for COVID-19 Research
+# Deployment & XAI of Machine Learning COVID-19 Solutions at Scale
 
 There has been great momentum from the machine learning community to extract insights from the increasingly growing COVID-19 Datasets, such as the Allen Institute for AI [Open Research Dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) as well as the data repository by [Johns Hopkins CSSE](https://github.com/CSSEGISandData/COVID-19).
 
@@ -664,7 +664,6 @@ kind: SeldonDeployment
 metadata:
   name: research-deployment
 spec:
-  name: research-spec
   predictors:
   - componentSpecs:
     - spec:
@@ -678,7 +677,7 @@ spec:
       endpoint:
         type: REST
       type: MODEL
-    name: research-pred
+    name: default
     replicas: 1
 
 ```
@@ -818,7 +817,6 @@ kind: SeldonDeployment
 metadata:
   name: research-deployment
 spec:
-  name: research-spec
   predictors:
   - componentSpecs:
     - spec:
@@ -834,7 +832,7 @@ spec:
       type: MODEL
     explainer:
       type: AnchorText
-    name: research-pred
+    name: default
     replicas: 1
 ```
 
@@ -850,7 +848,7 @@ This will ensure that we deploy our model together with an explainer of type Anc
 !kubectl apply -f research-deployment-with-explainer.yaml
 ```
 
-    seldondeployment.machinelearning.seldon.io/research-deployment configured
+    seldondeployment.machinelearning.seldon.io/research-deployment created
 
 
 We can now wait until our new predictor explainer is deployed, and all the routes are created
@@ -860,62 +858,27 @@ We can now wait until our new predictor explainer is deployed, and all the route
 !kubectl get pods | grep research
 ```
 
-    research-deployment-research-pred-0-65f7646d9c-s6bnr              2/2     Running     0          24m
-    research-deployment-research-pred-explainer-65b5bcf978-xps7q      1/1     Running     0          12m
+    research-deployment-default-0-research-model-86f486b5bd-x6vq5   2/2     Running     0          2m57s
+    research-deployment-default-explainer-5b87f8c744-6bj7q          0/1     Running     1          2m57s
 
 
 ## 7) Send requests to our deployed model
 
 Now that our Explainer is live, we are able to interact with it through its API.
 
-Once again we will be using the two approaches that we outlined above:
-
-a) Using CURL from the CLI (or another rest client like Postman)
-
-b) Using the Python SeldonClient
-
-#### a) Using CURL from the CLI
-
+The explainer will be interacting with the model to reverse engineer the predictions.
 
 
 ```bash
 %%bash
 curl -X POST -H 'Content-Type: application/json' \
     -d '{"data": {"names": ["text"], "ndarray": ["This paper is about virus and spread of disease"]}}' \
-    http://localhost:80/seldon/default/research-deployment/research-pred/explainer/
+    http://localhost:80/seldon/default/research-deployment/default/explainer/api/v1.0/explain
 ```
 
-#### b) Using the Python SeldonClient
+    {"names": ["disease"], "precision": 1.0, "coverage": 0.4993, "raw": {"feature": [8], "mean": [1.0], "precision": [1.0], "coverage": [0.4993], "examples": [{"covered": [["This paper UNK about UNK UNK spread UNK disease"], ["UNK UNK is UNK UNK UNK spread of disease"], ["UNK UNK UNK UNK UNK UNK spread UNK disease"], ["UNK paper UNK about virus UNK UNK of disease"], ["UNK paper UNK about virus and UNK of disease"], ["UNK UNK is about UNK UNK UNK UNK disease"], ["This paper UNK about UNK UNK spread of disease"], ["This UNK is UNK UNK UNK spread UNK disease"], ["This paper is about virus and spread UNK disease"], ["This paper is about UNK and spread UNK disease"]], "covered_true": [["UNK paper is about virus UNK spread UNK disease"], ["UNK paper UNK about UNK UNK UNK UNK disease"], ["This paper is UNK UNK and UNK UNK disease"], ["UNK paper is UNK UNK and UNK UNK disease"], ["UNK paper is about UNK UNK spread UNK disease"], ["UNK UNK is UNK UNK UNK spread of disease"], ["This paper UNK UNK UNK and UNK UNK disease"], ["UNK UNK is about UNK UNK UNK UNK disease"], ["This UNK is about virus and spread UNK disease"], ["UNK UNK UNK about UNK UNK spread of disease"]], "covered_false": [], "uncovered_true": [], "uncovered_false": []}], "all_precision": 0, "num_preds": 1000001, "names": ["disease"], "positions": [40], "instance": "This paper is about virus and spread of disease", "prediction": 1}, "meta": {"name": "AnchorText"}}
 
+      % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                     Dload  Upload   Total   Spent    Left  Speed
+    100  1529  100  1436  100    93   1339     86  0:00:01  0:00:01 --:--:--  1424
 
-```python
-from seldon_core.seldon_client import SeldonClient
-import numpy as np
-
-host = "localhost"
-port = "80" # Make sure you use the port above
-batch = np.array(["This paper is about virus and spread of disease"])
-payload_type = "ndarray"
-deployment_name="research-deployment"
-transport="rest"
-namespace="default"
-
-sc = SeldonClient(
-    gateway="ambassador", 
-    gateway_endpoint=host + ":" + port,
-    namespace=namespace)
-
-client_prediction = sc.explain(
-    data=batch, 
-    deployment_name=deployment_name,
-    names=["text"],
-    payload_type=payload_type,
-    transport="rest")
-
-print(client_prediction)
-```
-
-
-```python
-
-```

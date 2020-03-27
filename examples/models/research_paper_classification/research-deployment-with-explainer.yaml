@@ -4,7 +4,6 @@ kind: SeldonDeployment
 metadata:
   name: research-deployment
 spec:
-  name: research-spec
   predictors:
   - componentSpecs:
     - spec:
@@ -20,5 +19,5 @@ spec:
       type: MODEL
     explainer:
       type: AnchorText
-    name: research-pred
+    name: default
     replicas: 1
