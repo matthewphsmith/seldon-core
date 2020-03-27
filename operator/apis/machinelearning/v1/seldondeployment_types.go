@@ -19,6 +19,7 @@ package v1
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"github.com/seldonio/seldon-core/operator/constants"
 	autoscalingv2beta2 "k8s.io/api/autoscaling/v2beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,19 +27,34 @@ import (
 )
 
 const (
-	Label_seldon_id      = "seldon-deployment-id"
-	Label_seldon_app     = "seldon-app"
-	Label_seldon_app_svc = "seldon-app-svc"
-	Label_svc_orch       = "seldon-deployment-contains-svcorch"
+	Label_seldon_id          = "seldon-deployment-id"
+	Label_seldon_app         = "seldon-app"
+	Label_seldon_app_svc     = "seldon-app-svc"
+	Label_svc_orch           = "seldon-deployment-contains-svcorch"
+	Label_app                = "app"
+	Label_fluentd            = "fluentd"
+	Label_router             = "router"
+	Label_combiner           = "combiner"
+	Label_model              = "model"
+	Label_transformer        = "transformer"
+	Label_output_transformer = "output-transformer"
+	Label_default            = "default"
+	Label_shadow             = "shadow"
+	Label_canary             = "canary"
+	Label_explainer          = "explainer"
 
 	PODINFO_VOLUME_NAME = "podinfo"
 	PODINFO_VOLUME_PATH = "/etc/podinfo"
 
-	ENV_PREDICTIVE_UNIT_SERVICE_PORT = "PREDICTIVE_UNIT_SERVICE_PORT"
-	ENV_PREDICTIVE_UNIT_PARAMETERS   = "PREDICTIVE_UNIT_PARAMETERS"
-	ENV_PREDICTIVE_UNIT_ID           = "PREDICTIVE_UNIT_ID"
-	ENV_PREDICTOR_ID                 = "PREDICTOR_ID"
-	ENV_SELDON_DEPLOYMENT_ID         = "SELDON_DEPLOYMENT_ID"
+	ENV_PREDICTIVE_UNIT_SERVICE_PORT         = "PREDICTIVE_UNIT_SERVICE_PORT"
+	ENV_PREDICTIVE_UNIT_SERVICE_PORT_METRICS = "PREDICTIVE_UNIT_METRICS_SERVICE_PORT"
+	ENV_PREDICTIVE_UNIT_METRICS_ENDPOINT     = "PREDICTIVE_UNIT_METRICS_ENDPOINT"
+	ENV_PREDICTIVE_UNIT_PARAMETERS           = "PREDICTIVE_UNIT_PARAMETERS"
+	ENV_PREDICTIVE_UNIT_IMAGE                = "PREDICTIVE_UNIT_IMAGE"
+	ENV_PREDICTIVE_UNIT_ID                   = "PREDICTIVE_UNIT_ID"
+	ENV_PREDICTOR_ID                         = "PREDICTOR_ID"
+	ENV_PREDICTOR_LABELS                     = "PREDICTOR_LABELS"
+	ENV_SELDON_DEPLOYMENT_ID                 = "SELDON_DEPLOYMENT_ID"
 
 	ANNOTATION_JAVA_OPTS       = "seldon.io/engine-java-opts"
 	ANNOTATION_SEPARATE_ENGINE = "seldon.io/engine-separate-pod"
@@ -46,6 +62,8 @@ const (
 	ANNOTATION_NO_ENGINE       = "seldon.io/no-engine"
 	ANNOTATION_CUSTOM_SVC_NAME = "seldon.io/svc-name"
 	ANNOTATION_EXECUTOR        = "seldon.io/executor"
+
+	DeploymentNamePrefix = "seldon"
 )
 
 func hash(text string) string {
@@ -64,7 +82,7 @@ func GetSeldonDeploymentName(mlDep *SeldonDeployment) string {
 }
 
 func GetExplainerDeploymentName(sdepName string, predictorSpec *PredictorSpec) string {
-	name := sdepName + "-" + predictorSpec.Name + "-explainer"
+	name := sdepName + "-" + predictorSpec.Name + constants.ExplainerNameSuffix
 	if len(name) > 63 {
 		return "seldon-" + hash(name)
 	} else {
@@ -72,15 +90,27 @@ func GetExplainerDeploymentName(sdepName string, predictorSpec *PredictorSpec) s
 	}
 }
 
-func GetDeploymentName(mlDep *SeldonDeployment, predictorSpec PredictorSpec, podSpec *SeldonPodSpec, idx int) string {
-	name := mlDep.Name + "-" + predictorSpec.Name
+func getContainerNames(containers []v1.Container) string {
+	name := ""
+	for i, c := range containers {
+		if i > 0 {
+			name = name + "-"
+		}
+		name = name + c.Name
+	}
+	return name
+}
+
+func GetDeploymentName(mlDep *SeldonDeployment, predictorSpec PredictorSpec, podSpec *SeldonPodSpec, podSpecIdx int) string {
+	baseName := mlDep.Name + "-" + predictorSpec.Name + "-" + strconv.Itoa(podSpecIdx) + "-"
+	var name string
 	if podSpec != nil && len(podSpec.Metadata.Name) != 0 {
-		name = name + "-" + podSpec.Metadata.Name
+		name = baseName + podSpec.Metadata.Name
 	} else {
-		name = name + "-" + strconv.Itoa(idx)
+		name = baseName + getContainerNames(podSpec.Spec.Containers)
 	}
 	if len(name) > 63 {
-		return "seldon-" + hash(name)
+		return DeploymentNamePrefix + "-" + hash(name)
 	} else {
 		return name
 	}
@@ -349,9 +379,18 @@ type ServiceStatus struct {
 	ExplainerFor string `json:"explainerFor,omitempty" protobuf:"string,4,opt,name=explainerFor"`
 }
 
+type StatusState string
+
+// CRD Status values
+const (
+	StatusStateAvailable StatusState = "Available"
+	StatusStateCreating  StatusState = "Creating"
+	StatusStateFailed    StatusState = "Failed"
+)
+
 // SeldonDeploymentStatus defines the observed state of SeldonDeployment
 type SeldonDeploymentStatus struct {
-	State            string                      `json:"state,omitempty" protobuf:"string,1,opt,name=state"`
+	State            StatusState                 `json:"state,omitempty" protobuf:"string,1,opt,name=state"`
 	Description      string                      `json:"description,omitempty" protobuf:"string,2,opt,name=description"`
 	DeploymentStatus map[string]DeploymentStatus `json:"deploymentStatus,omitempty" protobuf:"bytes,3,opt,name=deploymentStatus"`
 	ServiceStatus    map[string]ServiceStatus    `json:"serviceStatus,omitempty" protobuf:"bytes,4,opt,name=serviceStatus"`
