@@ -85,7 +85,7 @@ import dill
 import sys, os
 import xai
 
-pd.set_option("display.notebook_repr_html", True)
+pd.set_option("display.notebook_repr_html", False)
 ```
 
 ### Let's download the SpaCy English Model
@@ -130,57 +130,12 @@ df.tail()
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>abstract</th>
-      <th>is_covid</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>3995</th>
-      <td>This article summarizes current knowledge abou...</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3996</th>
-      <td>While epidemiological models have traditionall...</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3997</th>
-      <td>TGEV and PEDV are porcine coronaviruses with t...</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3998</th>
-      <td>Metagenomics, i.e., the sequencing and analysi...</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>3999</th>
-      <td>Population genetic diversity plays a prominent...</td>
-      <td>1</td>
-    </tr>
-  </tbody>
-</table>
-</div>
+                                                   abstract  is_covid
+    3995  This article summarizes current knowledge abou...         1
+    3996  While epidemiological models have traditionall...         1
+    3997  TGEV and PEDV are porcine coronaviruses with t...         1
+    3998  Metagenomics, i.e., the sequencing and analysi...         1
+    3999  Population genetic diversity plays a prominent...         1
 
 
 
@@ -362,55 +317,13 @@ xai.metrics_plot(y_test, pred)
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>target</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>precision</th>
-      <td>0.994898</td>
-    </tr>
-    <tr>
-      <th>recall</th>
-      <td>0.975000</td>
-    </tr>
-    <tr>
-      <th>specificity</th>
-      <td>0.995000</td>
-    </tr>
-    <tr>
-      <th>accuracy</th>
-      <td>0.985000</td>
-    </tr>
-    <tr>
-      <th>auc</th>
-      <td>0.985000</td>
-    </tr>
-    <tr>
-      <th>f1</th>
-      <td>0.984848</td>
-    </tr>
-  </tbody>
-</table>
-</div>
+                   target
+    precision    0.994898
+    recall       0.975000
+    specificity  0.995000
+    accuracy     0.985000
+    auc          0.985000
+    f1           0.984848
 
 
 
@@ -820,7 +733,7 @@ curl -X POST -H 'Content-Type: application/json' \
 
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
-    100   188  100    95  100    93   7307   7153 --:--:-- --:--:-- --:--:-- 14461
+    100   188  100    95  100    93   7916   7750 --:--:-- --:--:-- --:--:-- 15666
 
 
 #### b) Using the Python SeldonClient
@@ -969,7 +882,7 @@ b) Using the Python SeldonClient
 %%bash
 curl -X POST -H 'Content-Type: application/json' \
     -d '{"data": {"names": ["text"], "ndarray": ["This paper is about virus and spread of disease"]}}' \
-    http://localhost:80/seldon/default/research-deployment/research-pred/explainer/api/v1.0/explain
+    http://localhost:80/seldon/default/research-deployment/research-pred/explainer/
 ```
 
 #### b) Using the Python SeldonClient
