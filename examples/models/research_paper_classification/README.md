@@ -84,6 +84,25 @@ import sys, os
 import xai
 ```
 
+### Let's download the SpaCy English Model
+
+
+```python
+from spacy.cli import download
+
+download("en_core_web_sm")
+```
+
+    
+    [93m    Linking successful[0m
+        /home/alejandro/miniconda3/lib/python3.7/site-packages/en_core_web_sm
+        -->
+        /home/alejandro/miniconda3/lib/python3.7/site-packages/spacy/data/en_core_web_sm
+    
+        You can now load the model via spacy.load('en_core_web_sm')
+    
+
+
 ## 1) Train and build your NLP model with SKLearn and SpaCy
 
 We can now get started with the training of our model. 
@@ -172,12 +191,12 @@ df["is_covid"].value_counts().plot.bar()
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7fc691cd95d0>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f729a4a0cd0>
 
 
 
 
-![png](README_files/README_12_1.png)
+![png](README_files/README_14_1.png)
 
 
 ### Split our train test dataset
@@ -198,6 +217,13 @@ x_train, x_test, y_train, y_test = train_test_split(
 ### Train our model: Clean Text
 As the first step for our model we'll first clean the incoming text data for any less meaningful characters and symbols
 
+For this, we have created a CleanTextTransformer class that will be doing the text pre-processing
+
+
+```python
+from ml_utils import CleanTextTransformer
+```
+
 
 ```python
 # Clean the text
@@ -207,6 +233,11 @@ x_train_clean = clean_text_transformer.transform(x_train)
 
 ### Train our model: Tokenize
 We now convert our input text into tokens - for this we use the SpaCy module.
+
+
+```python
+from ml_utils import SpacyTokenTransformer
+```
 
 
 ```python
@@ -354,7 +385,7 @@ xai.metrics_plot(y_test, pred)
 
 
 
-![png](README_files/README_27_1.png)
+![png](README_files/README_31_1.png)
 
 
 ## 2) Explain your model predictions using Alibi Explain
