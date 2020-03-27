@@ -18,7 +18,9 @@ The steps that we will be following in this tutorial include
 
 2) Explain your model predictions using Alibi Explain
 
-3) Containerize your model using Seldon Core Language Wrappers and deploy to Kubernetes
+3) Containerize your model using Seldon Core Language Wrappers 
+
+4) Deploy your model to Kubernetes
 
 5) Test your deployed model by sending requests
 
@@ -610,7 +612,7 @@ And now that everything is configured, we can build the `research-classifier:0.1
 !docker rm -f research_predictor
 ```
 
-    Error: No such container: reddit_predictor
+    Error: No such container: research_predictor
 
 
 
@@ -618,7 +620,7 @@ And now that everything is configured, we can build the `research-classifier:0.1
 !docker run --name "research_predictor" -d --rm -p 5001:5000 research-classifier:0.1
 ```
 
-    be29c6a00adec0f708dc5a1c83613e0656fddc06daba4ca02d93b5a7ece9b92b
+    17d7c5cbe0bedd3bc5e6db9314ea27d4c901e50d8084531a3f7db96973a24a4b
 
 
 ### Make sure you wait for language model
@@ -628,8 +630,50 @@ SpaCy will download the English language model, so you have to make sure the con
 ```python
 # Here we need to wait until we see "Linking successful", as it's downloading the Spacy English model
 # You can hit stop when this happens
-!docker logs -t -f research_predictor
+!docker logs -t research_predictor
 ```
+
+    2020-03-27T06:42:15.300402971Z starting microservice
+    2020-03-27T06:42:16.226289081Z 2020-03-27 06:42:16,225 - seldon_core.microservice:main:190 - INFO:  Starting microservice.py:main
+    2020-03-27T06:42:16.227528306Z 2020-03-27 06:42:16,227 - seldon_core.microservice:main:246 - INFO:  Parse JAEGER_EXTRA_TAGS []
+    2020-03-27T06:42:16.227623964Z 2020-03-27 06:42:16,227 - seldon_core.microservice:main:257 - INFO:  Annotations: {}
+    2020-03-27T06:42:16.227703697Z 2020-03-27 06:42:16,227 - seldon_core.microservice:main:261 - INFO:  Importing ResearchClassifier
+    2020-03-27T06:42:17.708431542Z Collecting en_core_web_sm==2.0.0 from https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.0.0/en_core_web_sm-2.0.0.tar.gz#egg=en_core_web_sm==2.0.0
+    2020-03-27T06:42:18.766598177Z   Downloading https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.0.0/en_core_web_sm-2.0.0.tar.gz (37.4MB)
+    2020-03-27T06:42:27.056778358Z Building wheels for collected packages: en-core-web-sm
+    2020-03-27T06:42:27.057336058Z   Building wheel for en-core-web-sm (setup.py): started
+    2020-03-27T06:42:29.508276329Z   Building wheel for en-core-web-sm (setup.py): finished with status 'done'
+    2020-03-27T06:42:29.603323879Z   Created wheel for en-core-web-sm: filename=en_core_web_sm-2.0.0-cp37-none-any.whl size=37405978 sha256=f70bd20f4ab4f5557c58d319986f4742e89fa27e018546c20667b6680e2dacc5
+    2020-03-27T06:42:29.603362554Z   Stored in directory: /tmp/pip-ephem-wheel-cache-qykoogkg/wheels/54/7c/d8/f86364af8fbba7258e14adae115f18dd2c91552406edc3fdaa
+    2020-03-27T06:42:29.985450322Z Successfully built en-core-web-sm
+    2020-03-27T06:42:29.985630047Z Installing collected packages: en-core-web-sm
+    2020-03-27T06:42:30.064010513Z Successfully installed en-core-web-sm-2.0.0
+    2020-03-27T06:42:31.268714990Z /opt/conda/lib/python3.7/site-packages/sklearn/base.py:318: UserWarning: Trying to unpickle estimator TfidfTransformer from version 0.20.1 when using version 0.22.2.post1. This might lead to breaking code or invalid results. Use at your own risk.
+    2020-03-27T06:42:31.268758107Z   UserWarning)
+    2020-03-27T06:42:31.268761465Z /opt/conda/lib/python3.7/site-packages/sklearn/base.py:318: UserWarning: Trying to unpickle estimator TfidfVectorizer from version 0.20.1 when using version 0.22.2.post1. This might lead to breaking code or invalid results. Use at your own risk.
+    2020-03-27T06:42:31.268764174Z   UserWarning)
+    2020-03-27T06:42:31.268766882Z /opt/conda/lib/python3.7/site-packages/sklearn/utils/deprecation.py:144: FutureWarning: The sklearn.linear_model.logistic module is  deprecated in version 0.22 and will be removed in version 0.24. The corresponding classes / functions should instead be imported from sklearn.linear_model. Anything that cannot be imported from sklearn.linear_model is now part of the private API.
+    2020-03-27T06:42:31.268772624Z   warnings.warn(message, FutureWarning)
+    2020-03-27T06:42:31.268775115Z /opt/conda/lib/python3.7/site-packages/sklearn/base.py:318: UserWarning: Trying to unpickle estimator LogisticRegression from version 0.20.1 when using version 0.22.2.post1. This might lead to breaking code or invalid results. Use at your own risk.
+    2020-03-27T06:42:31.268777824Z   UserWarning)
+    2020-03-27T06:42:31.268792665Z 2020-03-27 06:42:31,268 - seldon_core.microservice:main:325 - INFO:  REST microservice running on port 5000
+    2020-03-27T06:42:31.268795265Z 2020-03-27 06:42:31,268 - seldon_core.microservice:main:369 - INFO:  Starting servers
+    2020-03-27T06:42:31.269566599Z 
+    2020-03-27T06:42:31.269580140Z [93m    Linking successful[0m
+    2020-03-27T06:42:31.269583282Z     /opt/conda/lib/python3.7/site-packages/en_core_web_sm -->
+    2020-03-27T06:42:31.269585449Z     /opt/conda/lib/python3.7/site-packages/spacy/data/en_core_web_sm
+    2020-03-27T06:42:31.269587507Z 
+    2020-03-27T06:42:31.269589349Z     You can now load the model via spacy.load('en_core_web_sm')
+    2020-03-27T06:42:31.269591515Z 
+    2020-03-27T06:42:31.287201857Z  * Serving Flask app "seldon_core.wrapper" (lazy loading)
+    2020-03-27T06:42:31.287236307Z  * Environment: production
+    2020-03-27T06:42:31.287239340Z    WARNING: This is a development server. Do not use it in a production deployment.
+    2020-03-27T06:42:31.287241724Z    Use a production WSGI server instead.
+    2020-03-27T06:42:31.287243890Z  * Debug mode: off
+    2020-03-27T06:42:31.287955315Z 2020-03-27 06:42:31,287 - werkzeug:_log:113 - INFO:   * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+
+
+Now that it's running we can send a request to see the output. We will see that the response is basically the output of the model that we just trained, but it's now exposed through a fully fledged REST API.
 
 
 ```python
@@ -654,7 +698,7 @@ print(response)
       names: "tfidf"
       ndarray {
         values {
-          string_value: "This is the study that the article is based on:\r\n\r\nhttps://www.nature.com/articles/nature25778.epdf"
+          string_value: "The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data."
         }
       }
     }
@@ -669,10 +713,10 @@ print(response)
         values {
           list_value {
             values {
-              number_value: 0.8276709475641506
+              number_value: 0.550335993635677
             }
             values {
-              number_value: 0.1723290524358494
+              number_value: 0.449664006364323
             }
           }
         }
@@ -681,21 +725,19 @@ print(response)
     
 
 
+Before we move to the next step and run our model in a Kubernetes cluster we can stop the docker container.
+
 
 ```python
 # We now stop it to run it in docker
 !docker stop research_predictor
 ```
 
-    reddit_predictor
+    research_predictor
 
 
 ## 4) Run Seldon in your kubernetes cluster
 
-
-## Setup Seldon Core
-
-Use the setup notebook to [Setup Cluster](../../seldon_core_setup.ipynb#Setup-Cluster) with [Ambassador Ingress](../../seldon_core_setup.ipynb#Ambassador) and [Install Seldon Core](../../seldon_core_setup.ipynb#Install-Seldon-Core). Instructions [also online](./seldon_core_setup.html).
 
 ## 5) Deploy your model with Seldon
 We can now deploy our model by using the Seldon graph definition:
