@@ -193,7 +193,7 @@ df["is_covid"].value_counts().plot.bar()
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f729a4a0cd0>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f9ba3581910>
 
 
 
@@ -225,6 +225,16 @@ For this, we have created a CleanTextTransformer class that will be doing the te
 ```python
 from ml_utils import CleanTextTransformer
 ```
+
+    
+    [93m    Linking successful[0m
+        /home/alejandro/miniconda3/lib/python3.7/site-packages/en_core_web_sm
+        -->
+        /home/alejandro/miniconda3/lib/python3.7/site-packages/spacy/data/en_core_web_sm
+    
+        You can now load the model via spacy.load('en_core_web_sm')
+    
+
 
 
 ```python
@@ -272,17 +282,18 @@ tfidf_vectorizer.fit(x_train_tokenized)
             dtype=<class 'numpy.float64'>, encoding='utf-8', input='content',
             lowercase=True, max_df=1.0, max_features=10000, min_df=1,
             ngram_range=(1, 3), norm='l2',
-            preprocessor=<function <lambda> at 0x7fc69197e3b0>,
+            preprocessor=<function <lambda> at 0x7f9c0ddce5f0>,
             smooth_idf=True, stop_words=None, strip_accents=None,
             sublinear_tf=False, token_pattern=None,
-            tokenizer=<function <lambda> at 0x7fc69197e560>, use_idf=True,
+            tokenizer=<function <lambda> at 0x7f9c0ddce7a0>, use_idf=True,
             vocabulary=None)
 
 
 
+Transform our tokens to tfidf vectors
+
 
 ```python
-# Transform our tokens to tfidf vectors
 x_train_tfidf = tfidf_vectorizer.transform(
     x_train_tokenized)
 ```
@@ -308,11 +319,11 @@ lr.fit(x_train_tfidf, y_train)
 
 
 
-### Test your model
+### Evaluate your model
 
 Now that we've trained our model we can test its performance against our test dataset. 
 
-FOr this we first extract the predictions for all our test dataset
+Let's run a single instance through our classifier first.
 
 
 ```python
@@ -321,10 +332,25 @@ def predict_fn(x):
     x_s = spacy_tokenizer.transform(x_c)
     x_t = tfidf_vectorizer.transform(x_s)
     return lr.predict(x_t)
+
+print(x_test[0:1])
+print(f"Expected class: {y_test[0:1]}")
+print(f"Predicted class: {predict_fn(x_test[0:1])}")
+```
+
+    ['We report theoretical and simulation studies of phase coexistence in model globular protein solutions, based on short-range, central, pair potential representations of the interaction among macro-particles. After reviewing our previous investigations of hard-core Yukawa and generalised Lennard-Jones potentials, we report more recent results obtained within a DLVO-like description of lysozyme solutions in water and added salt. We show that a one-parameter fit of this model based on Static Light Scattering and Self-Interaction Chromatography data in the dilute protein regime, yields demixing and crystallization curves in good agreement with experimental protein-rich/protein-poor and solubility envelopes. The dependence of cloud and solubility points temperature of the model on the ionic strength is also investigated. Our findings highlight the minimal assumptions on the properties of the microscopic interaction sufficient for a satisfactory reproduction of the phase diagram topology of globular protein solutions.']
+    Expected class: [0]
+    Predicted class: [0]
+
+
+Now to evaluate our model we run all our test dataset and extract predictions, so we can evaluate them.
+
+
+```python
 pred = predict_fn(x_test)
 ```
 
-And now we can see the performance of the predictions, which as we can see is quite satisfactory
+And now we can see the performance of the predictions, which looks good specifically in this toy dataset.
 
 
 ```python
@@ -387,23 +413,31 @@ xai.metrics_plot(y_test, pred)
 
 
 
-![png](README_files/README_31_1.png)
+![png](README_files/README_34_1.png)
 
 
 ## 2) Explain your model predictions using Alibi Explain
 
 We will now use the Alibi library to explain predictions from the model we've built
 
+We start by using our alibi explainer for text, and the Spacy NLP module
+
 
 ```python
-# Import the Spacy NLP module for our explainer
-from ml_utils import nlp
+import spacy
+import alibi
+
+nlp = spacy.load("en_core_web_sm", parser=False, entity=False)
 ```
+
+In order to create a text explainer, we just have to pass the `predict_fn` that we defined above, as it will reverse engineer the explanations
 
 
 ```python
 explainer = alibi.explainers.AnchorText(nlp, predict_fn)
 ```
+
+Now we select a prediction which we will want to explain, in this case we select the index `1` from our test dataset
 
 
 ```python
@@ -418,10 +452,14 @@ x_explain
 
 
 
+And we simply send the prediction request into our explainer, which should take about 10-30 seconds.
+
 
 ```python
 explanation = explainer.explain(x_explain, threshold=0.95, use_unk=True)
 ```
+
+Finally we can print our explanations, which in this case it will tell us the tokens that had the strongest predictive power
 
 
 ```python
@@ -434,25 +472,29 @@ print('\n\nExample where anchor applies and model predicts is_covid==False')
 print(f"\n{explanation.raw['examples'][-1]['covered_false'][0]}".replace("UNK", "___"))
 ```
 
-    Anchor: the
-    Precision: 0.98
+    Anchor: real
+    Precision: 0.97
     
     Original Sample:
     The modifiable areal unit problem, MAUP, is ever-present although not always appreciated. Through real examples, this article outlines the basic causes of MAUP, namely changes in the size, shape, and/or orientation of spatial categories/polygons used to map areal data. The visual effects of changes to mapped data are obvious even though the impacts on our understanding of the world are profound. The article concludes with a discussion of technical and broader strategic approaches for confronting the effects of MAUP on our treatment and interpretation of areal data.
     
     First Example where anchor applies and model predicts is_covid==True
     
-    The modifiable ___ unit problem , MAUP ___ ___ ever - ___ ___ not always ___ . ___ ___ ___ , this ___ ___ the basic ___ of ___ , ___ ___ in the ___ ___ ___ ___ and/or ___ of spatial categories ___ polygons ___ ___ map ___ data ___ The visual effects of ___ ___ mapped ___ are ___ ___ though the impacts on ___ understanding ___ ___ world ___ profound . ___ article concludes with ___ ___ ___ technical and broader strategic ___ ___ ___ the ___ ___ ___ on our ___ and ___ of areal ___ ___
+    ___ modifiable areal unit ___ , ___ ___ ___ ever - present ___ ___ always ___ . Through real ___ ___ this ___ ___ ___ ___ ___ ___ ___ , namely ___ in the ___ ___ ___ ___ ___ ___ of spatial ___ / ___ used ___ ___ areal data ___ The ___ ___ ___ ___ ___ mapped data are obvious even ___ the impacts ___ our understanding ___ the ___ ___ ___ ___ The ___ concludes with ___ ___ ___ ___ and broader ___ ___ for confronting ___ ___ of MAUP on ___ ___ ___ ___ ___ ___ ___ ___
     
     
     Example where anchor applies and model predicts is_covid==False
     
-    ___ modifiable ___ ___ problem ___ MAUP , is ___ ___ present although not ___ ___ ___ ___ ___ ___ , ___ article outlines the basic causes of MAUP , ___ changes ___ the size ___ ___ , and/or orientation ___ spatial categories ___ polygons used ___ ___ areal ___ ___ The ___ ___ of changes to ___ ___ ___ ___ even though ___ ___ ___ ___ understanding of ___ world are profound . ___ article concludes with a ___ ___ technical and broader ___ approaches ___ confronting the effects ___ MAUP ___ ___ treatment ___ ___ of areal ___ ___
+    ___ modifiable ___ unit ___ ___ MAUP ___ is ever - ___ although ___ ___ appreciated . ___ real ___ , this article outlines ___ basic ___ of MAUP ___ namely changes in the ___ , ___ , and/or orientation of ___ categories ___ polygons used ___ ___ ___ ___ ___ ___ ___ ___ of changes to ___ data are ___ ___ ___ ___ ___ ___ our ___ ___ the ___ ___ profound ___ The article concludes with a discussion of technical ___ broader strategic ___ for confronting the effects of ___ on ___ treatment and ___ ___ ___ ___ ___
 
-
-First we need to export the trained models
 
 ## 2) Build your containerized model
+
+Now that we have trained our model, and we know how to use the Alibi explainability library, we can actually deploy these models.
+
+### First u
+
+To get started we will 
 
 
 ```python
