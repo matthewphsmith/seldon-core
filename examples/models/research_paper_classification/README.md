@@ -82,6 +82,8 @@ from seldon_core.seldon_client import SeldonClient
 import dill
 import sys, os
 import xai
+
+pd.set_option("display.notebook_repr_html", True)
 ```
 
 ### Let's download the SpaCy English Model
