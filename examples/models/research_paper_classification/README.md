@@ -738,9 +738,9 @@ Before we move to the next step and run our model in a Kubernetes cluster we can
 
 ## 4) Run Seldon in your kubernetes cluster
 
+In order to deploy our model to Kubernetes, we just need to define a simple deployment configuration file.
 
-## 5) Deploy your model with Seldon
-We can now deploy our model by using the Seldon graph definition:
+This configuration file basically points to the container that we just built above, so make sure the Kubernetes cluster has access to the container (you may need to push the image into your docker repo).
 
 
 ```python
@@ -770,31 +770,31 @@ spec:
 
 ```
 
-    Writing research-deployment.yaml
+    Overwriting research-deployment.yaml
 
+
+Now we can apply this SeldonDeployment into our Kubernetes cluster
 
 
 ```python
 !kubectl apply -f research-deployment.yaml
 ```
 
-    seldondeployment.machinelearning.seldon.io/reddit-classifier created
+    seldondeployment.machinelearning.seldon.io/research-deployment created
 
+
+And we can make sure that our model is actually running as expected
 
 
 ```python
-!kubectl get pods 
+!kubectl get pods | grep research
 ```
 
-    NAME                                                    READY   STATUS    RESTARTS   AGE
-    ambassador-7bfc87f865-jkxs8                             1/1     Running   0          5m2s
-    ambassador-7bfc87f865-nr7bn                             1/1     Running   0          5m2s
-    ambassador-7bfc87f865-q4lng                             1/1     Running   0          5m2s
-    reddit-classifier-single-model-9199e4b-bcc5cdcc-g8j2q   2/2     Running   1          77s
-    seldon-operator-controller-manager-0                    1/1     Running   1          5m23s
+    research-deployment-research-pred-0-65f7646d9c-s6bnr              2/2     Running     0          54s
 
 
-## 6) Interact with your model through API
+## 6) Send requests to our deployed model
+
 Now that our Seldon Deployment is live, we are able to interact with it through its API.
 
 There are two options in which we can interact with our new model. These are:
@@ -809,31 +809,16 @@ b) Using the Python SeldonClient
 ```bash
 %%bash
 curl -X POST -H 'Content-Type: application/json' \
-    -d "{'data': {'names': ['text'], 'ndarray': ['Hello world this is a test']}}" \
-    http://127.0.0.1/seldon/default/research-deployment/api/v0.1/predictions
+    -d '{"data": {"names": ["text"], "ndarray": ["Hello world this is a test"]}}' \
+    http://localhost/seldon/default/research-deployment/api/v1.0/predictions
 ```
 
-    {
-      "meta": {
-        "puid": "bvj1rjiq3vvnieo0oir4h7bf6f",
-        "tags": {
-        },
-        "routing": {
-        },
-        "requestPath": {
-          "classifier": "reddit-classifier:0.1"
-        },
-        "metrics": []
-      },
-      "data": {
-        "names": ["t:0", "t:1"],
-        "ndarray": [[0.6815614604065544, 0.3184385395934456]]
-      }
-    }
+    {"data":{"names":["t:0","t:1"],"ndarray":[[0.4797349117536369,0.5202650882463631]]},"meta":{}}
+
 
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
-    100   372  100   300  100    72   1522    365 --:--:-- --:--:-- --:--:--  1897
+    100   167  100    95  100    72   6785   5142 --:--:-- --:--:-- --:--:-- 12846
 
 
 #### b) Using the Python SeldonClient
