@@ -492,9 +492,9 @@ print(f"\n{explanation.raw['examples'][-1]['covered_false'][0]}".replace("UNK", 
 
 Now that we have trained our model, and we know how to use the Alibi explainability library, we can actually deploy these models.
 
-### First u
+### First use Seldon Core to containerise the model
 
-To get started we will 
+To get started we will use Seldon to Containerise the model, for this we will export the models we trained above into the current folder
 
 
 ```python
