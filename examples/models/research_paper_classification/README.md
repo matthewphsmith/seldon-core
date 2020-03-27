@@ -490,7 +490,7 @@ print(f"\n{explanation.raw['examples'][-1]['covered_false'][0]}".replace("UNK", 
     ___ modifiable ___ unit ___ ___ MAUP ___ is ever - ___ although ___ ___ appreciated . ___ real ___ , this article outlines ___ basic ___ of MAUP ___ namely changes in the ___ , ___ , and/or orientation of ___ categories ___ polygons used ___ ___ ___ ___ ___ ___ ___ ___ of changes to ___ data are ___ ___ ___ ___ ___ ___ our ___ ___ the ___ ___ profound ___ The article concludes with a discussion of technical ___ broader strategic ___ for confronting the effects of ___ on ___ treatment and ___ ___ ___ ___ ___
 
 
-## 2) Build your containerized model
+## 3) Build your containerized model
 
 Now that we have trained our model, and we know how to use the Alibi explainability library, we can actually deploy these models.
 
@@ -604,7 +604,7 @@ And now that everything is configured, we can build the `research-classifier:0.1
 !s2i build . seldonio/seldon-core-s2i-python3:0.18 research-classifier:0.1
 ```
 
-## 3) Test your model as a docker container
+### Test your model as a docker container
 
 
 ```python
@@ -793,7 +793,7 @@ And we can make sure that our model is actually running as expected
     research-deployment-research-pred-0-65f7646d9c-s6bnr              2/2     Running     0          54s
 
 
-## 6) Send requests to our deployed model
+## 5) Send requests to our deployed model
 
 Now that our Seldon Deployment is live, we are able to interact with it through its API.
 
@@ -887,6 +887,120 @@ print(client_prediction)
     }
     
 
+
+## 6) Deploy a text explainer
+
+Now that we have deployed our model, we can also deploy the explainer that we showed above.
+
+Fortunately, Seldon Core already supports several out of the box explainers, including a generic text explainer.
+
+Because of this, we will be able to just modify the existing deployment file to specify we want to add a text explainer
+
+
+```python
+%%writefile research-deployment-with-explainer.yaml
+---
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: research-deployment
+spec:
+  name: research-spec
+  predictors:
+  - componentSpecs:
+    - spec:
+        containers:
+        - image: research-classifier:0.1
+          imagePullPolicy: IfNotPresent
+          name: research-model
+    graph:
+      children: []
+      name: research-model
+      endpoint:
+        type: REST
+      type: MODEL
+    explainer:
+      type: AnchorText
+    name: research-pred
+    replicas: 1
+```
+
+    Overwriting research-deployment-with-explainer.yaml
+
+
+As you can see we defined a new section with the name `explainer:`, and we provided the type as `AnchorText`.
+
+This will ensure that we deploy our model together with an explainer of type AnchorText which is what we used above.
+
+
+```python
+!kubectl apply -f research-deployment-with-explainer.yaml
+```
+
+    seldondeployment.machinelearning.seldon.io/research-deployment configured
+
+
+We can now wait until our new predictor explainer is deployed, and all the routes are created
+
+
+```python
+!kubectl get pods | grep research
+```
+
+    research-deployment-research-pred-0-65f7646d9c-s6bnr              2/2     Running     0          24m
+    research-deployment-research-pred-explainer-65b5bcf978-xps7q      1/1     Running     0          12m
+
+
+## 7) Send requests to our deployed model
+
+Now that our Explainer is live, we are able to interact with it through its API.
+
+Once again we will be using the two approaches that we outlined above:
+
+a) Using CURL from the CLI (or another rest client like Postman)
+
+b) Using the Python SeldonClient
+
+#### a) Using CURL from the CLI
+
+
+
+```bash
+%%bash
+curl -X POST -H 'Content-Type: application/json' \
+    -d '{"data": {"names": ["text"], "ndarray": ["This paper is about virus and spread of disease"]}}' \
+    http://localhost:80/seldon/default/research-deployment/research-pred/explainer/api/v1.0/explain
+```
+
+#### b) Using the Python SeldonClient
+
+
+```python
+from seldon_core.seldon_client import SeldonClient
+import numpy as np
+
+host = "localhost"
+port = "80" # Make sure you use the port above
+batch = np.array(["This paper is about virus and spread of disease"])
+payload_type = "ndarray"
+deployment_name="research-deployment"
+transport="rest"
+namespace="default"
+
+sc = SeldonClient(
+    gateway="ambassador", 
+    gateway_endpoint=host + ":" + port,
+    namespace=namespace)
+
+client_prediction = sc.explain(
+    data=batch, 
+    deployment_name=deployment_name,
+    names=["text"],
+    payload_type=payload_type,
+    transport="rest")
+
+print(client_prediction)
+```
 
 
 ```python
