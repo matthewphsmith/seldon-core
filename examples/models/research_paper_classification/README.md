@@ -1,22 +1,20 @@
 # Research Paper Classification for COVID-19 Research
 
-There has been great momentum from the machine learning community to extract insights from the increasingly growing COVID-19 Datasets.
+There has been great momentum from the machine learning community to extract insights from the increasingly growing COVID-19 Datasets, such as the Allen Institute for AI [Open Research Dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) as well as the data repository by [Johns Hopkins CSSE](https://github.com/CSSEGISandData/COVID-19).
 
-We believe the most powerful insights can be brought through cross-functional collaboration between infectious disease experts and machine learning practitioners. 
+We believe the most powerful insights can be brought through cross-functional collaboration, such as between infectious disease experts and machine learning practitioners. 
 
-More importantly, once powerful predictive and explanatory models are built, it is especially important to be able to enable access to these models at scale.
+More importantly, once powerful predictive and explanatory models are built, it is especially important to be able to deploy and enable access to these models at scale to power solutions that can solve real-life challenges.
 
-In this small tutorial we will show how you can deploy your machine learning solutions at scale, and we will use a practical example with an on-going Kaggle dataset released by the Allen Institute for AI containing over 44,000 scholarly articles on COVID-19.
+In this small tutorial we will show how you can deploy your machine learning solutions at scale, and we will use a practical example. For this we will be building a simple text classifier using the Allen Institute for AI COVID-19 Open Research Dataset which has been open sourced with over 44,000 scholarly articles on COVID-19, together with the [Arxiv Metadata Research Dataset](https://www.kaggle.com/tayorm/arxiv-papers-metadata) which contains over 1.5M papers.
 
-In this tutorial we will deploy a COVID-19 research paper classifier using Seldon Core, which will allow us to convert this ML model into a fully fledged microservice, which we'll be able to send REST / GRPC requests, as well as monitor through grafana / ELK integration.
+In this tutorial we will focus primarily around the techniques to productionise an already trained model, and we will showcase how you're able to leverage the Seldon Core Prepackaged Model Servers, the Python Language Wrapper, and some of our AI Explainability infrastructure tools.
 
 ## Tutorial Overview
 
-In this tutorial we will showcase an end-to-end workflow that will ultimately show how to deploy a machine learning model - in this case we will be building a classifier that identifies whether a research paper is related to covid-19.
+The steps that we will be following in this tutorial include
 
-The steps in this tutorial include:
-
-1) Train and build your NLP model with SKLearn and SpaCy
+1) Train and build a simple NLP model with SKLearn and SpaCy
 
 2) Explain your model predictions using Alibi Explain
 
@@ -32,13 +30,15 @@ The steps in this tutorial include:
 Make sure you install the following dependencies, as they are critical for this example to work:
 
 * Seldon Core v1.1+ installed with Istio Ingress Enabled ([Documentation Instructions](https://docs.seldon.io/projects/seldon-core/en/latest/workflow/install.html#ingress-support))
-* All dependencies specified in the Seldon Core page
+* A Kubernetes Cluster with all dependencies specified in the Seldon Core page
 
 Let's get started! 🚀🔥
 
-## 0) Prepare your environment
+## 0) Prepare your development environment
 
-First we want to install all the dependencies. For this let's create a requirements-dev.txt file with everything we'll need:
+First we want to install all the dependencies. 
+
+These are all going to be in our `requirements-dev.txt` file.
 
 
 ```python
@@ -51,10 +51,10 @@ xai==0.0.5
 alibi==0.4.0
 ```
 
-    Writing requirements-dev.txt
+    Overwriting requirements-dev.txt
 
 
-And then let's install all of our dependencies locally so we can train and test our model
+We can then use pip to install the requirements above:
 
 
 ```python
@@ -62,7 +62,14 @@ And then let's install all of our dependencies locally so we can train and test 
 !pip install -r requirements-dev.txt
 ```
 
-Now that everything is installed, we can import all our dependencies
+          Successfully uninstalled matplotlib-3.1.3
+      Found existing installation: wrapt 1.12.1
+        Uninstalling wrapt-1.12.1:
+          Successfully uninstalled wrapt-1.12.1
+    Successfully installed alibi-0.4.0 matplotlib-3.0.2 wrapt-1.10.11
+
+
+Now that everything is installed, we can import all our dependencies.
 
 
 ```python
@@ -75,26 +82,15 @@ from seldon_core.seldon_client import SeldonClient
 import dill
 import sys, os
 import xai
-
-# This import may take a while as it will download the Spacy ENGLISH model
-from ml_utils import CleanTextTransformer, SpacyTokenTransformer
 ```
-
-    
-    [93m    Linking successful[0m
-        /home/alejandro/miniconda3/lib/python3.7/site-packages/en_core_web_sm
-        -->
-        /home/alejandro/miniconda3/lib/python3.7/site-packages/spacy/data/en_core_web_sm
-    
-        You can now load the model via spacy.load('en_core_web_sm')
-    
-
 
 ## 1) Train and build your NLP model with SKLearn and SpaCy
 
 We can now get started with the training of our model. 
 
-For this we will want to load the simplified dataset that we have created for this example:
+For this tutorial we are going to focus primarily on the productionisation of the model, so we will use a significantly smaller dataset.
+
+More specifically we selected randomly 2000 abstracts from the COVID-19 Open Research Dataset, and 2000 abstracts from the [Arxiv Papers Metadata Dataset](https://www.kaggle.com/tayorm/arxiv-papers-metadata) to compare against to provide a (very simplified) example of an NLP classification model.
 
 
 ```python
