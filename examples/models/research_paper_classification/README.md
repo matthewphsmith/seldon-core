@@ -805,20 +805,22 @@ b) Using the Python SeldonClient
 
 #### a) Using CURL from the CLI
 
+We can actually send a simple request and see what the prediction is, in the case below the prediction is positive for COVID
+
 
 ```bash
 %%bash
 curl -X POST -H 'Content-Type: application/json' \
-    -d '{"data": {"names": ["text"], "ndarray": ["Hello world this is a test"]}}' \
+    -d '{"data": {"names": ["text"], "ndarray": ["This paper is about virus and spread of disease"]}}' \
     http://localhost/seldon/default/research-deployment/api/v1.0/predictions
 ```
 
-    {"data":{"names":["t:0","t:1"],"ndarray":[[0.4797349117536369,0.5202650882463631]]},"meta":{}}
+    {"data":{"names":["t:0","t:1"],"ndarray":[[0.3729505481093134,0.6270494518906866]]},"meta":{}}
 
 
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
-    100   167  100    95  100    72   6785   5142 --:--:-- --:--:-- --:--:-- 12846
+    100   188  100    95  100    93   7307   7153 --:--:-- --:--:-- --:--:-- 14461
 
 
 #### b) Using the Python SeldonClient
@@ -830,15 +832,15 @@ import numpy as np
 
 host = "localhost"
 port = "80" # Make sure you use the port above
-batch = np.array(["Hello world this is a test"])
+batch = np.array(["This paper is about virus and spread of disease"])
 payload_type = "ndarray"
-deployment_name="reddit-deployment"
+deployment_name="research-deployment"
 transport="rest"
 namespace="default"
 
 sc = SeldonClient(
     gateway="ambassador", 
-    ambassador_endpoint=host + ":" + port,
+    gateway_endpoint=host + ":" + port,
     namespace=namespace)
 
 client_prediction = sc.predict(
@@ -853,22 +855,19 @@ print(client_prediction)
 
     Success:True message:
     Request:
+    meta {
+    }
     data {
       names: "text"
       ndarray {
         values {
-          string_value: "Hello world this is a test"
+          string_value: "This paper is about virus and spread of disease"
         }
       }
     }
     
     Response:
     meta {
-      puid: "uld2famhfrb97vd7regu0q7k32"
-      requestPath {
-        key: "classifier"
-        value: "reddit-classifier:0.1"
-      }
     }
     data {
       names: "t:0"
@@ -877,10 +876,10 @@ print(client_prediction)
         values {
           list_value {
             values {
-              number_value: 0.6815614604065544
+              number_value: 0.3729505481093134
             }
             values {
-              number_value: 0.3184385395934456
+              number_value: 0.6270494518906866
             }
           }
         }
