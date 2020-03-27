@@ -1,4 +1,4 @@
-# Deployment & XAI of Machine Learning COVID-19 Solutions at Scale
+# Deployment & Explainability of Machine Learning COVID-19 Solutions at Scale with Seldon Core and Alibi
 
 There has been great momentum from the machine learning community to extract insights from the increasingly growing COVID-19 Datasets, such as the Allen Institute for AI [Open Research Dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) as well as the data repository by [Johns Hopkins CSSE](https://github.com/CSSEGISandData/COVID-19).
 
@@ -858,11 +858,11 @@ We can now wait until our new predictor explainer is deployed, and all the route
 !kubectl get pods | grep research
 ```
 
-    research-deployment-default-0-research-model-86f486b5bd-x6vq5   2/2     Running     0          2m57s
-    research-deployment-default-explainer-5b87f8c744-6bj7q          0/1     Running     1          2m57s
+    research-deployment-default-0-research-model-86f486b5bd-x6vq5   2/2     Running     0          14m
+    research-deployment-default-explainer-5b87f8c744-6bj7q          1/1     Running     1          14m
 
 
-## 7) Send requests to our deployed model
+## 7) Send requests to our deployed explainer
 
 Now that our Explainer is live, we are able to interact with it through its API.
 
@@ -873,12 +873,122 @@ The explainer will be interacting with the model to reverse engineer the predict
 %%bash
 curl -X POST -H 'Content-Type: application/json' \
     -d '{"data": {"names": ["text"], "ndarray": ["This paper is about virus and spread of disease"]}}' \
-    http://localhost:80/seldon/default/research-deployment/default/explainer/api/v1.0/explain
+    http://localhost:80/seldon/default/research-deployment/default/explainer/api/v1.0/explain | json_pp
 ```
 
-    {"names": ["disease"], "precision": 1.0, "coverage": 0.4993, "raw": {"feature": [8], "mean": [1.0], "precision": [1.0], "coverage": [0.4993], "examples": [{"covered": [["This paper UNK about UNK UNK spread UNK disease"], ["UNK UNK is UNK UNK UNK spread of disease"], ["UNK UNK UNK UNK UNK UNK spread UNK disease"], ["UNK paper UNK about virus UNK UNK of disease"], ["UNK paper UNK about virus and UNK of disease"], ["UNK UNK is about UNK UNK UNK UNK disease"], ["This paper UNK about UNK UNK spread of disease"], ["This UNK is UNK UNK UNK spread UNK disease"], ["This paper is about virus and spread UNK disease"], ["This paper is about UNK and spread UNK disease"]], "covered_true": [["UNK paper is about virus UNK spread UNK disease"], ["UNK paper UNK about UNK UNK UNK UNK disease"], ["This paper is UNK UNK and UNK UNK disease"], ["UNK paper is UNK UNK and UNK UNK disease"], ["UNK paper is about UNK UNK spread UNK disease"], ["UNK UNK is UNK UNK UNK spread of disease"], ["This paper UNK UNK UNK and UNK UNK disease"], ["UNK UNK is about UNK UNK UNK UNK disease"], ["This UNK is about virus and spread UNK disease"], ["UNK UNK UNK about UNK UNK spread of disease"]], "covered_false": [], "uncovered_true": [], "uncovered_false": []}], "all_precision": 0, "num_preds": 1000001, "names": ["disease"], "positions": [40], "instance": "This paper is about virus and spread of disease", "prediction": 1}, "meta": {"name": "AnchorText"}}
+    {
+       "coverage" : 0.4993,
+       "meta" : {
+          "name" : "AnchorText"
+       },
+       "precision" : 1,
+       "raw" : {
+          "num_preds" : 1000001,
+          "positions" : [
+             40
+          ],
+          "names" : [
+             "disease"
+          ],
+          "precision" : [
+             1
+          ],
+          "prediction" : 1,
+          "examples" : [
+             {
+                "covered_true" : [
+                   [
+                      "UNK paper is about virus UNK spread UNK disease"
+                   ],
+                   [
+                      "UNK paper UNK about UNK UNK UNK UNK disease"
+                   ],
+                   [
+                      "This paper is UNK UNK and UNK UNK disease"
+                   ],
+                   [
+                      "UNK paper is UNK UNK and UNK UNK disease"
+                   ],
+                   [
+                      "UNK paper is about UNK UNK spread UNK disease"
+                   ],
+                   [
+                      "UNK UNK is UNK UNK UNK spread of disease"
+                   ],
+                   [
+                      "This paper UNK UNK UNK and UNK UNK disease"
+                   ],
+                   [
+                      "UNK UNK is about UNK UNK UNK UNK disease"
+                   ],
+                   [
+                      "This UNK is about virus and spread UNK disease"
+                   ],
+                   [
+                      "UNK UNK UNK about UNK UNK spread of disease"
+                   ]
+                ],
+                "uncovered_false" : [],
+                "covered" : [
+                   [
+                      "This paper UNK about UNK UNK spread UNK disease"
+                   ],
+                   [
+                      "UNK UNK is UNK UNK UNK spread of disease"
+                   ],
+                   [
+                      "UNK UNK UNK UNK UNK UNK spread UNK disease"
+                   ],
+                   [
+                      "UNK paper UNK about virus UNK UNK of disease"
+                   ],
+                   [
+                      "UNK paper UNK about virus and UNK of disease"
+                   ],
+                   [
+                      "UNK UNK is about UNK UNK UNK UNK disease"
+                   ],
+                   [
+                      "This paper UNK about UNK UNK spread of disease"
+                   ],
+                   [
+                      "This UNK is UNK UNK UNK spread UNK disease"
+                   ],
+                   [
+                      "This paper is about virus and spread UNK disease"
+                   ],
+                   [
+                      "This paper is about UNK and spread UNK disease"
+                   ]
+                ],
+                "uncovered_true" : [],
+                "covered_false" : []
+             }
+          ],
+          "instance" : "This paper is about virus and spread of disease",
+          "coverage" : [
+             0.4993
+          ],
+          "mean" : [
+             1
+          ],
+          "feature" : [
+             8
+          ],
+          "all_precision" : 0
+       },
+       "names" : [
+          "disease"
+       ]
+    }
+
 
       % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                      Dload  Upload   Total   Spent    Left  Speed
-    100  1529  100  1436  100    93   1339     86  0:00:01  0:00:01 --:--:--  1424
+    100  1529  100  1436  100    93   1447     93  0:00:01 --:--:--  0:00:01  1539
 
+
+
+```python
+
+```
