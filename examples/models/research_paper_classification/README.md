@@ -10,6 +10,8 @@ In this small tutorial we will show how you can deploy your machine learning sol
 
 In this tutorial we will focus primarily around the techniques to productionise an already trained model, and we will showcase how you're able to leverage the Seldon Core Prepackaged Model Servers, the Python Language Wrapper, and some of our AI Explainability infrastructure tools.
 
+![](https://raw.githubusercontent.com/SeldonIO/seldon-core/master/doc/source/images/seldon-core-high-level.jpg)
+
 ## Tutorial Overview
 
 The steps that we will be following in this tutorial include
