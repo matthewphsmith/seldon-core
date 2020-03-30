@@ -1,7 +1,5 @@
 # Deployment & Explainability of Machine Learning COVID-19 Solutions at Scale with Seldon Core and Alibi
 
-![](https://raw.githubusercontent.com/axsaucedo/seldon-core/corona_research_exploration/examples/models/research_paper_classification/diagram.jpg)
-
 There has been great momentum from the machine learning community to extract insights from the increasingly growing COVID-19 Datasets, such as the Allen Institute for AI [Open Research Dataset](https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge) as well as the data repository by [Johns Hopkins CSSE](https://github.com/CSSEGISandData/COVID-19).
 
 We believe the most powerful insights can be brought through cross-functional collaboration, such as between infectious disease experts and machine learning practitioners. 
@@ -31,6 +29,11 @@ The steps that we will be following in this tutorial include
 6) Deploy our standard Alibi TextExplainer 
 
 7) Test your deployed explainer by sending requests
+
+Our final solution will look as the outlined diagram below:
+
+![](https://raw.githubusercontent.com/axsaucedo/seldon-core/corona_research_exploration/examples/models/research_paper_classification/diagram.jpg)
+
 
 ### Before you start
 Make sure you install the following dependencies, as they are critical for this example to work:
