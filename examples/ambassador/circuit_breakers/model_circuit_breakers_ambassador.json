@@ -1,3 +1,4 @@
+
 {
     "apiVersion": "machinelearning.seldon.io/v1alpha2",
     "kind": "SeldonDeployment",
@@ -10,9 +11,10 @@
     "spec": {	
         "name": "production-model",
     "annotations": {
-        "seldon.io/ambassador-circuit-breakers-max-connections":"200",
-        "seldon.io/ambassador-circuit-breakers-max-pending-requests":"100",
-        "seldon.io/ambassador-circuit-breakers-max-requests":"200",
+        "seldon.io/rest-timeout":"100000",
+        "seldon.io/ambassador-circuit-breakers-max-connections":"1",
+        "seldon.io/ambassador-circuit-breakers-max-pending-requests":"1",
+        "seldon.io/ambassador-circuit-breakers-max-requests":"1",
         "seldon.io/ambassador-circuit-breakers-max-retries":"3"
     },
         "predictors": [
@@ -21,7 +23,7 @@
                     "spec": {
                         "containers": [
                             {
-                                "image": "seldonio/mock_classifier_rest:1.4",
+                                "image": "long_running_model:0.1",
                                 "imagePullPolicy": "IfNotPresent",
                                 "name": "classifier"
                             }
@@ -43,4 +45,3 @@
         ]
     }
 }
-
