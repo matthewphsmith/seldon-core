@@ -38,6 +38,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
+	certv1alpha2 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
 )
 
 var (
@@ -54,6 +55,7 @@ func init() {
 	_ = machinelearningv1alpha2.AddToScheme(scheme)
 	_ = machinelearningv1alpha3.AddToScheme(scheme)
 	_ = v1beta1.AddToScheme(scheme)
+	_ = certv1alpha2.AddToScheme(scheme)
 	if controllers.GetEnv(controllers.ENV_ISTIO_ENABLED, "false") == "true" {
 		_ = istio.AddToScheme(scheme)
 	}
