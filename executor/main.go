@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
@@ -11,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -26,12 +28,17 @@ import (
 	"github.com/seldonio/seldon-core/executor/api/grpc/tensorflow"
 	"github.com/seldonio/seldon-core/executor/api/rest"
 	"github.com/seldonio/seldon-core/executor/api/tracing"
+	"github.com/seldonio/seldon-core/executor/api/util"
 	"github.com/seldonio/seldon-core/executor/k8s"
 	loghandler "github.com/seldonio/seldon-core/executor/logger"
 	"github.com/seldonio/seldon-core/executor/proto/tensorflow/serving"
 	v1 "github.com/seldonio/seldon-core/operator/apis/machinelearning.seldon.io/v1"
 	"github.com/soheilhy/cmux"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+)
+
+const (
+	ENV_VAR_CERT_MOUNT_PATH = "SELDON_CERT_MOUNT_PATH"
 )
 
 var (
@@ -46,6 +53,8 @@ var (
 	hostname       = flag.String("hostname", "localhost", "The hostname of the running server")
 	logWorkers     = flag.Int("logger_workers", 5, "Number of workers handling payload logging")
 	prometheusPath = flag.String("prometheus_path", "/metrics", "The prometheus metrics path")
+
+	envCertMountPath = util.GetEnv(ENV_VAR_CERT_MOUNT_PATH, "")
 )
 
 func getPredictorFromEnv() (*v1.PredictorSpec, error) {
@@ -223,9 +232,25 @@ func main() {
 	defer closer.Close()
 
 	// Create a listener at the desired port.
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatalf("failed to create listener: %v", err)
+	var lis net.Listener
+	if len(envCertMountPath) > 0 {
+		logger.Info("Creating TLS listener", "port", *port)
+		certPath := path.Join(envCertMountPath, "tls.crt")
+		keyPath := path.Join(envCertMountPath, "tls.key")
+		cert, err := tls.LoadX509KeyPair(certPath, keyPath)
+		if err != nil {
+			log.Fatalf("Error certificate could not be found: %v", err)
+		}
+		lis, err = tls.Listen("tcp", fmt.Sprintf(":%d", *port), &tls.Config{Certificates: []tls.Certificate{cert}})
+		if err != nil {
+			log.Fatalf("failed to create listener: %v", err)
+		}
+	} else {
+		logger.Info("Creating non-TLS listener", "port", *port)
+		lis, err = net.Listen("tcp", fmt.Sprintf(":%d", *port))
+		if err != nil {
+			log.Fatalf("failed to create listener: %v", err)
+		}
 	}
 	defer lis.Close()
 
