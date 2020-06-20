@@ -10,6 +10,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/go-cmp v0.3.1
 	github.com/gophercloud/gophercloud v0.4.0 // indirect
+	github.com/jetstack/cert-manager v0.12.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.8.1
 	golang.org/x/sys v0.0.0-20200409092240-59c9f1ba88fa // indirect
