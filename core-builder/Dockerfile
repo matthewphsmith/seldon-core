@@ -110,7 +110,7 @@ RUN INSTALL_DIR=/tmp/flatc-install && \
 RUN apt-get remove -y --auto-remove && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # INSTALL GO
-ENV GO_VERSION=1.14.6
+ENV GO_VERSION=1.13.8
 ENV PATH /usr/local/go/bin:$PATH
 RUN wget "https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz" && \
         tar -zxvf "go$GO_VERSION.linux-amd64.tar.gz" && \
